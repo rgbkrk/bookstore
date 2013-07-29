@@ -22,7 +22,7 @@ $ ipython profile create swifty_ipy
 Add this to your ipython notebook profile (`ipython_notebook_config.py`):
 
 ```bash
-c.NotebookApp.notebook_manager_class = '.OpenStackNotebookManager'
+c.NotebookApp.notebook_manager_class = 'ipynb_swiftstore.OpenStackNotebookManager'
 c.OpenStackNotebookManager.account_name = USER_NAME
 c.OpenStackNotebookManager.account_key = API_KEY
 c.OpenStackNotebookManager.container_name = u'notebooks'
