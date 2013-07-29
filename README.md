@@ -3,6 +3,9 @@ ipynb-swiftstore
 
 Stores IPython notebooks automagically onto an OpenStack Swift implementation, including Rackspace CloudFiles.
 
+**Note: This currently only works against the alpha release of IPython 1.0.0.
+Stay tuned.**
+
 # Usage
 
 Make sure you have a notebook profile setup. It's easy to set one up if you

@@ -14,10 +14,11 @@ if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist upload')
     sys.exit()
 
-requires = ['pyrax==1.4.7',
-            'ipython==0.13.2',
-            'tornado==3.1',
-            'pyzmq==13.1.0'
+requires = ['pyrax>=1.4.7',
+            'ipython==1.0.0a',
+            'tornado>=3.1',
+            'pyzmq>=13.1.0',
+            'Jinja2>=2.7',
 ]
 
 setup(name='ipynb_swiftstore',
@@ -30,6 +31,7 @@ setup(name='ipynb_swiftstore',
       package_data={'': ['LICENSE']},
       include_package_data=False,
       install_requires=requires,
+      #dependency_links=["https://github.com/ipython/ipython/archive/c74db3ba79170c30e6875e8c2960c3bfe1f06ec8.zip#egg=ipython-1.0.0a"],
       license=open('LICENSE').read(),
       zip_safe=True,
       classifiers=(

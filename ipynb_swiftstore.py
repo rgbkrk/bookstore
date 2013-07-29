@@ -34,6 +34,7 @@ from IPython.nbformat import current
 from IPython.utils.traitlets import Unicode, Instance
 
 try:
+    # IPython 1.0+
     from IPython.utils import tz
     utcnow = tz.utcnow
 except ImportError:
