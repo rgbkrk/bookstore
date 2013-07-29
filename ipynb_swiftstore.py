@@ -32,7 +32,28 @@ except ImportError:
 
 from IPython.nbformat import current
 from IPython.utils.traitlets import Unicode, Instance
-from IPython.utils import tz
+
+try:
+    from IPython.utils import tz
+    utcnow = tz.utcnow
+except ImportError:
+    # Taken straight from
+    # https://github.com/ipython/ipython/blob/b5297e0be3a45b4f48831ffe1451a8abf0ed2e95/IPython/utils/tz.py,
+    # to keep timestamps consistent with IPython
+    # See also https://github.com/ipython/ipython/pull/3525/files
+    from datetime import timedelta, tzinfo
+    ZERO = timedelta(0)
+    class tzUTC(tzinfo):
+        """tzinfo object for UTC (zero offset)"""
+        def utcoffset(self, d):
+            return ZERO
+        def dst(self, d):
+            return ZERO
+    UTC = tzUTC()
+    def utcnow():
+        dt = datetime.utcnow()
+        return dt.replace(tzinfo=UTC)
+
 
 class OpenStackNotebookManager(NotebookManager):
 
@@ -99,7 +120,7 @@ class OpenStackNotebookManager(NotebookManager):
             raise web.HTTPError(500, u'Unreadable JSON notebook.')
         # Todo: The last modified should actually be saved in the notebook document.
         # We are just using the current datetime until that is implemented.
-        last_modified = tz.utcnow()
+        last_modified = utcnow()
         return last_modified, nb
 
     def write_notebook_object(self, nb, notebook_id=None):
