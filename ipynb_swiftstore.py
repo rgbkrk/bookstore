@@ -24,7 +24,12 @@ from pyrax.exceptions import NoSuchContainer
 
 from tornado import web
 
-from IPython.html.services.notebooks.nbmanager import NotebookManager
+try:
+    # IPython 1.0+
+    from IPython.html.services.notebooks.nbmanager import NotebookManager
+except ImportError:
+    from IPython.frontend.html.notebook.notebookmanager import NotebookManager
+
 from IPython.nbformat import current
 from IPython.utils.traitlets import Unicode, Instance
 from IPython.utils import tz
