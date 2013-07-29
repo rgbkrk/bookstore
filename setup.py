@@ -17,6 +17,7 @@ if sys.argv[-1] == 'publish':
 requires = ['pyrax==1.4.7',
             'ipython==0.13.2',
             'tornado==3.1',
+            'pyzmq==13.1.0'
 ]
 
 setup(name='ipynb_swiftstore',
