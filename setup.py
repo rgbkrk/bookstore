@@ -31,6 +31,7 @@ setup(name='ipynb_swiftstore',
       package_data={'': ['LICENSE']},
       include_package_data=False,
       install_requires=requires,
+      # Can't pull from the zip file as IPython uses git submodules
       #dependency_links=["https://github.com/ipython/ipython/archive/c74db3ba79170c30e6875e8c2960c3bfe1f06ec8.zip#egg=ipython-1.0.0a"],
       license=open('LICENSE').read(),
       zip_safe=True,
