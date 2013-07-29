@@ -3,8 +3,6 @@ ipynb-swiftstore
 
 Stores IPython notebooks automagically onto an OpenStack Swift implementation, including Rackspace CloudFiles.
 
-![IPython Notebook](http://ipython.org/ipython-doc/rel-0.13/_images/ipynb_icon_128x128.png) ![->](http://i.imgur.com/kOFsLIx.jpg) ![OpenStack](http://i.imgur.com/7BeZLRq.jpg)
-
 # Usage
 
 Make sure you have a notebook profile setup. It's easy to set one up if you
