@@ -3,6 +3,8 @@ ipynb-swiftstore
 
 Stores IPython notebooks automagically onto an OpenStack Swift implementation, including Rackspace CloudFiles.
 
+![IPython Notebook](http://ipython.org/ipython-doc/rel-0.13/_images/ipynb_icon_128x128.png) -> ![OpenStack](http://cloudtimes.org/wp-content/uploads/2011/03/openstacklogo1.jpg)
+
 # Usage
 
 Make sure you have a notebook profile setup. It's easy to set one up if you
@@ -34,7 +36,6 @@ api key of course. You can get the API key from the cloud control panel after lo
 ## On OpenStack Swift
 
 The configuration is a bit different for OpenStack.
-
 
 
 
