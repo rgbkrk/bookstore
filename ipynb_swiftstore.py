@@ -5,9 +5,28 @@
 """
 A notebook manager that uses OpenStack Swift object storage.
 
-Authors:
+ipynb_swiftstore requires IPython 1.0.0a or greater to work.
 
-* Kyle Kelley
+To use this with IPython, you'll need IPython notebook fully installed
+(ipython, tornado, pyzmq, and Jinja2) and a notebook profile.
+
+It's easy to set up a notebook profile if you don't have one:
+
+    $ ipython profile create swifty_ipy
+    [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_config.py'
+    [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_notebook_config.py'
+
+Now, add this to your ipython notebook profile (`ipython_notebook_config.py`):
+
+    c.NotebookApp.notebook_manager_class = 'ipynb_swiftstore.OpenStackNotebookManager'
+    c.OpenStackNotebookManager.account_name = USER_NAME
+    c.OpenStackNotebookManager.account_key = API_KEY
+    c.OpenStackNotebookManager.container_name = u'notebooks'
+    c.OpenStackNotebookManager.identity_type = u'rackspace' #keystone for other OpenStack implementations
+
+You'll need to replace `USER_NAME` and `API_KEY` with your actual username and
+api key of course. You can get the API key from the cloud control panel after logging in.
+
 """
 
 #-----------------------------------------------------------------------------
@@ -28,6 +47,7 @@ try:
     # IPython 1.0+
     from IPython.html.services.notebooks.nbmanager import NotebookManager
 except ImportError:
+    # Old IPython
     from IPython.frontend.html.notebook.notebookmanager import NotebookManager
 
 from IPython.nbformat import current
@@ -38,6 +58,7 @@ try:
     from IPython.utils import tz
     utcnow = tz.utcnow
 except ImportError:
+    # Old IPython
     # Taken straight from
     # https://github.com/ipython/ipython/blob/b5297e0be3a45b4f48831ffe1451a8abf0ed2e95/IPython/utils/tz.py,
     # to keep timestamps consistent with IPython
@@ -57,6 +78,9 @@ except ImportError:
 
 
 class OpenStackNotebookManager(NotebookManager):
+    '''
+    Manages IPython notebooks on OpenStack Swift
+    '''
 
     account_name = Unicode('', config=True, help='OpenStack account name.')
     account_key = Unicode('', config=True, help='OpenStack account key.')
