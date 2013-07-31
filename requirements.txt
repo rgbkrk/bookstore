@@ -1,0 +1,3 @@
+pyrax
+tornado
+-e git+https://github.com/ipython/ipython.git@55dfcbc98cd2f1e2bfc6c9f127c97a746f79c459#egg=ipython
