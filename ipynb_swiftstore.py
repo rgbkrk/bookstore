@@ -43,39 +43,13 @@ from pyrax.exceptions import NoSuchContainer
 
 from tornado import web
 
-try:
-    # IPython 1.0+
-    from IPython.html.services.notebooks.nbmanager import NotebookManager
-except ImportError:
-    # Old IPython
-    from IPython.frontend.html.notebook.notebookmanager import NotebookManager
+from IPython.html.services.notebooks.nbmanager import NotebookManager
 
 from IPython.nbformat import current
 from IPython.utils.traitlets import Unicode, Instance
+from IPython.utils import tz
 
-try:
-    # IPython 1.0+
-    from IPython.utils import tz
-    utcnow = tz.utcnow
-except ImportError:
-    # Old IPython
-    # Taken straight from
-    # https://github.com/ipython/ipython/blob/b5297e0be3a45b4f48831ffe1451a8abf0ed2e95/IPython/utils/tz.py,
-    # to keep timestamps consistent with IPython
-    # See also https://github.com/ipython/ipython/pull/3525/files
-    from datetime import timedelta, tzinfo
-    ZERO = timedelta(0)
-    class tzUTC(tzinfo):
-        """tzinfo object for UTC (zero offset)"""
-        def utcoffset(self, d):
-            return ZERO
-        def dst(self, d):
-            return ZERO
-    UTC = tzUTC()
-    def utcnow():
-        dt = datetime.utcnow()
-        return dt.replace(tzinfo=UTC)
-
+METADATA_NBNAME = METADATA_NBNAME
 
 class OpenStackNotebookManager(NotebookManager):
     '''
@@ -118,7 +92,7 @@ class OpenStackNotebookManager(NotebookManager):
             nb_id = obj.name
             metadata = obj.get_metadata()
 
-            name = metadata['x-object-meta-nbname']
+            name = metadata[METADATA_NBNAME]
             self.mapping[nb_id] = name
 
     def list_notebooks(self):
@@ -167,7 +141,7 @@ class OpenStackNotebookManager(NotebookManager):
         except Exception as e:
             raise web.HTTPError(400, u'Unexpected error while saving notebook: %s' % e)
 
-        metadata = {'x-object-meta-nbname': new_name}
+        metadata = {METADATA_NBNAME: new_name}
         try:
             obj = self.container.store_object(notebook_id, data)
             obj.set_metadata(metadata)
