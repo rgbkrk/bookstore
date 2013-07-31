@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 
 """
-A notebook manager that uses OpenStack Swift object storage.
+A notebook manager that uses Rackspace CloudFiles.
 
 ipynb_swiftstore requires IPython 1.0.0a or greater to work.
 
@@ -12,18 +12,20 @@ To use this with IPython, you'll need IPython notebook fully installed
 
 It's easy to set up a notebook profile if you don't have one:
 
-    $ ipython profile create swifty_ipy
+    $ ipython profile create swiftstore
     [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_config.py'
     [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_notebook_config.py'
 
+You can also use your default config, located at
+
+~/.ipython/profile_default/ipython_notebook_config.py
+
 Now, add this to your ipython notebook profile (`ipython_notebook_config.py`):
 
-    c.NotebookApp.notebook_manager_class = 'ipynb_swiftstore.OpenStackNotebookManager'
-    c.OpenStackNotebookManager.account_name = USER_NAME
-    c.OpenStackNotebookManager.account_key = API_KEY
-    c.OpenStackNotebookManager.container_name = u'notebooks'
-    c.OpenStackNotebookManager.identity_type = u'rackspace' #keystone for other OpenStack implementations
-    c.OpenStackNotebookManager.auth_endpoint = u'' #
+    c.NotebookApp.notebook_manager_class = 'bookstore.CloudFilesNotebookManager'
+    c.CloudFilesNotebookManager.account_name = USER_NAME
+    c.CloudFilesNotebookManager.account_key = API_KEY
+    c.CloudFilesNotebookManager.container_name = u'notebooks'
 
 You'll need to replace `USER_NAME` and `API_KEY` with your actual username and
 api key of course. You can get the API key from the cloud control panel after logging in.
@@ -45,6 +47,7 @@ from pyrax.exceptions import NoSuchContainer
 from tornado import web
 
 from IPython.html.services.notebooks.nbmanager import NotebookManager
+from swift import SwiftNotebookManager
 
 from IPython.nbformat import current
 from IPython.utils.traitlets import Unicode, Instance
@@ -62,16 +65,16 @@ class CloudFilesNotebookManager(SwiftNotebookManager):
 
     account_name = Unicode('', config=True, help='Rackspace username')
     account_key = Unicode('', config=True, help='Rackspace API Key')
-    container_name = Unicode('', config=True, help='Container name for notebooks.')
+    region = Unicode('DFW', config=True, help='Region')
+    identity_type = "rackspace"
 
     # TODO: Add optional region
 
     def __init__(self, **kwargs):
-        NotebookManager.__init__(**kwargs)
-        #super(CloudFilesNotebookManager, self).__init__(**kwargs)
+        super(CloudFilesNotebookManager,self).__init__(**kwargs)
         pyrax.set_setting("identity_type", "rackspace")
         # Set the region, optionally
-        # pyrax.set_setting("region", region) # e.g. "LON"
+        pyrax.set_setting("region", self.region) # e.g. "LON"
 
         pyrax.set_credentials(username=self.account_name, api_key=self.account_key)
         self.cf = pyrax.cloudfiles
@@ -80,3 +83,7 @@ class CloudFilesNotebookManager(SwiftNotebookManager):
             self.container = self.cf.get_container(self.container_name)
         except NoSuchContainer:
             self.container = self.cf.create_container(self.container_name)
+
+    def info_string(self):
+        info = "Serving notebooks from Rackspace CloudFiles: {},{}"
+        return info.format(self.account_name, self.container_name)

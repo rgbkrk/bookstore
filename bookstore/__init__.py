@@ -2,6 +2,6 @@
 
 # -*- coding: utf-8 -*-
 
-import .swift
-import .cloudfiles
+import swift
+import cloudfiles
 
