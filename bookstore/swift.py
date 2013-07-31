@@ -5,24 +5,29 @@
 """
 A notebook manager that uses OpenStack Swift object storage.
 
-ipynb_swiftstore requires IPython 1.0.0a or greater to work.
-
 To use this with IPython, you'll need IPython notebook fully installed
 (ipython, tornado, pyzmq, and Jinja2) and a notebook profile.
 
 It's easy to set up a notebook profile if you don't have one:
 
-    $ ipython profile create swifty_ipy
+    $ ipython profile create swiftstore
     [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_config.py'
     [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_notebook_config.py'
 
+You can also use your default config, located at
+
+~/.ipython/profile_default/ipython_notebook_config.py
+
 Now, add this to your ipython notebook profile (`ipython_notebook_config.py`):
 
-    c.NotebookApp.notebook_manager_class = 'ipynb_swiftstore.OpenStackNotebookManager'
-    c.OpenStackNotebookManager.account_name = USER_NAME
-    c.OpenStackNotebookManager.account_key = API_KEY
-    c.OpenStackNotebookManager.container_name = u'notebooks'
-    c.OpenStackNotebookManager.identity_type = u'rackspace' #keystone for other OpenStack implementations
+    c.NotebookApp.notebook_manager_class = 'bookstore.SwiftNotebookManager'
+    c.SwiftNotebookManager.account_name = USER_NAME
+    c.SwiftNotebookManager.account_key = API_KEY
+    c.SwiftNotebookManager.container_name = u'notebooks'
+    c.SwiftNotebookManager.auth_endpoint = u'127.0.0.1:8021'
+    c.SwiftNotebookManager.tenant_id = TENANT_ID
+    c.SwiftNotebookManager.tenant_name = TENANT_ID
+    c.SwiftNotebookManager.region = 'RegionOne'
 
 You'll need to replace `USER_NAME` and `API_KEY` with your actual username and
 api key of course. You can get the API key from the cloud control panel after logging in.
@@ -43,65 +48,26 @@ from pyrax.exceptions import NoSuchContainer
 
 from tornado import web
 
-try:
-    # IPython 1.0+
-    from IPython.html.services.notebooks.nbmanager import NotebookManager
-except ImportError:
-    # Old IPython
-    from IPython.frontend.html.notebook.notebookmanager import NotebookManager
+from IPython.html.services.notebooks.nbmanager import NotebookManager
 
 from IPython.nbformat import current
 from IPython.utils.traitlets import Unicode, Instance
+from IPython.utils.tz import utcnow
 
-try:
-    # IPython 1.0+
-    from IPython.utils import tz
-    utcnow = tz.utcnow
-except ImportError:
-    # Old IPython
-    # Taken straight from
-    # https://github.com/ipython/ipython/blob/b5297e0be3a45b4f48831ffe1451a8abf0ed2e95/IPython/utils/tz.py,
-    # to keep timestamps consistent with IPython
-    # See also https://github.com/ipython/ipython/pull/3525/files
-    from datetime import timedelta, tzinfo
-    ZERO = timedelta(0)
-    class tzUTC(tzinfo):
-        """tzinfo object for UTC (zero offset)"""
-        def utcoffset(self, d):
-            return ZERO
-        def dst(self, d):
-            return ZERO
-    UTC = tzUTC()
-    def utcnow():
-        dt = datetime.utcnow()
-        return dt.replace(tzinfo=UTC)
+METADATA_NBNAME = 'x-object-meta-nbname'
 
-
-class OpenStackNotebookManager(NotebookManager):
+class SwiftNotebookManager(NotebookManager):
     '''
-    Manages IPython notebooks on OpenStack Swift
+    This is a base class to be subclasses by OpenStack providers. The swift
+    object storage should work across implementations. The big difference is
+    authentication which is implemented separately in
+    KeystoneAuthNotebookManager and CloudFilesNotebookManager.
     '''
 
-    account_name = Unicode('', config=True, help='OpenStack account name.')
-    account_key = Unicode('', config=True, help='OpenStack account key.')
-    identity_type = Unicode('', config=True, help='OpenStack Identity type (e.g. rackspace or openstack)')
-    container_name = Unicode('', config=True, help='Container name for notebooks.')
+    container_name = Unicode('notebooks', config=True, help='Container name for notebooks.')
 
     def __init__(self, **kwargs):
-        super(OpenStackNotebookManager, self).__init__(**kwargs)
-        pyrax.set_setting("identity_type", self.identity_type)
-        pyrax.set_credentials(username=self.account_name, api_key=self.account_key)
-
-        # Set the region, optionally
-        # pyrax.set_setting("region", region) # e.g. "LON"
-
-        self.cf = pyrax.cloudfiles
-
-        try:
-            self.container = self.cf.get_container(self.container_name)
-        except NoSuchContainer:
-            self.container = self.cf.create_container(self.container_name)
-
+        super(SwiftNotebookManager, self).__init__(**kwargs)
 
     def load_notebook_names(self):
         """On startup load the notebook ids and names from OpenStack Swift.
@@ -118,7 +84,7 @@ class OpenStackNotebookManager(NotebookManager):
             nb_id = obj.name
             metadata = obj.get_metadata()
 
-            name = metadata['x-object-meta-nbname']
+            name = metadata[METADATA_NBNAME]
             self.mapping[nb_id] = name
 
     def list_notebooks(self):
@@ -167,7 +133,7 @@ class OpenStackNotebookManager(NotebookManager):
         except Exception as e:
             raise web.HTTPError(400, u'Unexpected error while saving notebook: %s' % e)
 
-        metadata = {'x-object-meta-nbname': new_name}
+        metadata = {METADATA_NBNAME: new_name}
         try:
             obj = self.container.store_object(notebook_id, data)
             obj.set_metadata(metadata)
@@ -213,5 +179,39 @@ class OpenStackNotebookManager(NotebookManager):
     def info_string(self):
         info = "Serving notebooks from OpenStack Swift storage: {},{}"
         return info.format(self.account_name, self.container_name)
+
+
+class KeystoneAuthNotebookManager(SwiftNotebookManager):
+    '''
+    Manages IPython notebooks on OpenStack Swift.
+
+    Extend this class with the defaults for your OpenStack provider to make
+    configuration for clients easier.
+    '''
+    account_name = Unicode('', config=True, help='OpenStack account name.')
+    account_key = Unicode('', config=True, help='OpenStack account key.')
+    auth_endpoint = Unicode('', config=True, help='Authentication endpoint.')
+    region = Unicode('RegionOne', config=True, help='Region (e.g. RegionOne, ORD, LON)')
+    tenant_id = Unicode('', config=True, help='The tenant ID used for authentication')
+    tenant_name = Unicode('', config=True, help='The tenant name used for authentication')
+    identity_type = 'keystone'
+
+    def __init__(self, **kwargs):
+        super(SwiftNotebookManager, self).__init__(**kwargs)
+        pyrax.set_setting("identity_type", self.identity_type)
+        pyrax.set_setting("auth_endpoint", self.auth_endpoint)
+        pyrax.set_setting("region", self.region)
+        pyrax.set_setting("tenant_id", self.tenant_id)
+        pyrax.set_setting("tenant_name", self.tenant_name)
+
+        # Set creds and authenticate
+        pyrax.set_credentials(username=self.account_name, api_key=self.account_key)
+
+        self.cf = pyrax.cloudfiles
+
+        try:
+            self.container = self.cf.get_container(self.container_name)
+        except NoSuchContainer:
+            self.container = self.cf.create_container(self.container_name)
 
 
