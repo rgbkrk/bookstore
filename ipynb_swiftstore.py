@@ -49,7 +49,7 @@ from IPython.nbformat import current
 from IPython.utils.traitlets import Unicode, Instance
 from IPython.utils import tz
 
-METADATA_NBNAME = METADATA_NBNAME
+METADATA_NBNAME = 'x-object-meta-nbname'
 
 class OpenStackNotebookManager(NotebookManager):
     '''
