@@ -1,4 +1,4 @@
-ipynb-swiftstore
+Bookstore
 =======================
 
 Stores IPython notebooks automagically onto an OpenStack Swift implementation, including Rackspace CloudFiles.
@@ -22,11 +22,10 @@ $ ipython profile create swifty_ipy
 Add this to your ipython notebook profile (`ipython_notebook_config.py`):
 
 ```bash
-c.NotebookApp.notebook_manager_class = 'ipynb_swiftstore.OpenStackNotebookManager'
+c.NotebookApp.notebook_manager_class = 'bookstore.CloudFilesNotebookManager'
 c.OpenStackNotebookManager.account_name = USER_NAME
 c.OpenStackNotebookManager.account_key = API_KEY
 c.OpenStackNotebookManager.container_name = u'notebooks'
-c.OpenStackNotebookManager.identity_type = u'rackspace' #keystone for other OpenStack implementations
 ```
 
 You'll need to replace `USER_NAME` and `API_KEY` with your actual username and
