@@ -23,7 +23,7 @@ requires = ['pyrax>=1.4.7',
 
 setup(name='bookstore',
       version='0.0.0',
-      description='IPython notebook manager for OpenStack and Rackspace',
+      description='IPython notebook manager for OpenStack Swift and Rackspace',
       author='Kyle Kelley',
       author_email='rgbkrk@gmail.com',
       url='http://github.com/rgbkrk/ipynb-swiftstore',
