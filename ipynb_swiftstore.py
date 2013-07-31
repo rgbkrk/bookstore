@@ -23,6 +23,7 @@ Now, add this to your ipython notebook profile (`ipython_notebook_config.py`):
     c.OpenStackNotebookManager.account_key = API_KEY
     c.OpenStackNotebookManager.container_name = u'notebooks'
     c.OpenStackNotebookManager.identity_type = u'rackspace' #keystone for other OpenStack implementations
+    c.OpenStackNotebookManager.auth_endpoint = u'' #
 
 You'll need to replace `USER_NAME` and `API_KEY` with your actual username and
 api key of course. You can get the API key from the cloud control panel after logging in.
@@ -47,7 +48,7 @@ from IPython.html.services.notebooks.nbmanager import NotebookManager
 
 from IPython.nbformat import current
 from IPython.utils.traitlets import Unicode, Instance
-from IPython.utils import tz
+from IPython.utils.tz import utcnow
 
 METADATA_NBNAME = 'x-object-meta-nbname'
 
@@ -60,6 +61,9 @@ class OpenStackNotebookManager(NotebookManager):
     account_key = Unicode('', config=True, help='OpenStack account key.')
     identity_type = Unicode('', config=True, help='OpenStack Identity type (e.g. rackspace or openstack)')
     container_name = Unicode('', config=True, help='Container name for notebooks.')
+
+    #
+    auth_endpoint = Unicode('', config=True, help='Authentication endpoint.')
 
     def __init__(self, **kwargs):
         super(OpenStackNotebookManager, self).__init__(**kwargs)

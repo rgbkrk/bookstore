@@ -15,7 +15,7 @@ if sys.argv[-1] == 'publish':
     sys.exit()
 
 requires = ['pyrax>=1.4.7',
-            'ipython==1.0.0a',
+            #'ipython==1.0.0a',
             'tornado>=3.1',
             'pyzmq>=13.1.0',
             'Jinja2>=2.7',
@@ -32,7 +32,7 @@ setup(name='ipynb_swiftstore',
       include_package_data=False,
       install_requires=requires,
       # Can't pull from the zip file as IPython uses git submodules
-      #dependency_links=["http://1e991763eb16b226de7f-815b705eb00655bf9ca363d7dfb3b606.r62.cf2.rackcdn.com/ipython_fed72595f462ec5a060aa4b5a2b1621e7b682b54.tgz"],
+      #dependency_links=['-e git+https://github.com/ipython/ipython.git@55dfcbc98cd2f1e2bfc6c9f127c97a746f79c459#egg=ipython'],
       license=open('LICENSE').read(),
       zip_safe=True,
       classifiers=(
