@@ -5,8 +5,6 @@
 """
 A notebook manager that uses OpenStack Swift object storage.
 
-ipynb_swiftstore requires IPython 1.0.0a or greater to work.
-
 To use this with IPython, you'll need IPython notebook fully installed
 (ipython, tornado, pyzmq, and Jinja2) and a notebook profile.
 
@@ -17,6 +15,8 @@ It's easy to set up a notebook profile if you don't have one:
     [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_notebook_config.py'
 
 Now, add this to your ipython notebook profile (`ipython_notebook_config.py`):
+
+# TODO: Add OpenStack specifics
 
     c.NotebookApp.notebook_manager_class = 'ipynb_swiftstore.OpenStackNotebookManager'
     c.OpenStackNotebookManager.account_name = USER_NAME
@@ -52,7 +52,7 @@ from IPython.utils.tz import utcnow
 
 METADATA_NBNAME = 'x-object-meta-nbname'
 
-class OpenStackNotebookManager(NotebookManager):
+class SwiftNotebookManager(NotebookManager):
     '''
     Manages IPython notebooks on OpenStack Swift
     '''
