@@ -22,7 +22,7 @@ You can also use your default config, located at
 
 Now, add this to your ipython notebook profile (`ipython_notebook_config.py`):
 
-    c.NotebookApp.notebook_manager_class = 'bookstore.CloudFilesNotebookManager'
+    c.NotebookApp.notebook_manager_class = 'bookstore.cloudfiles.CloudFilesNotebookManager'
     c.CloudFilesNotebookManager.account_name = USER_NAME
     c.CloudFilesNotebookManager.account_key = API_KEY
     c.CloudFilesNotebookManager.container_name = u'notebooks'
@@ -85,5 +85,7 @@ class CloudFilesNotebookManager(SwiftNotebookManager):
             self.container = self.cf.create_container(self.container_name)
 
     def info_string(self):
-        info = "Serving notebooks from Rackspace CloudFiles: {},{}"
+        info = "Serving {}'s notebooks on Rackspace CloudFiles from container: {}"
         return info.format(self.account_name, self.container_name)
+
+

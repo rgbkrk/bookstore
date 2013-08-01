@@ -20,14 +20,14 @@ You can also use your default config, located at
 
 Now, add this to your ipython notebook profile (`ipython_notebook_config.py`):
 
-    c.NotebookApp.notebook_manager_class = 'bookstore.SwiftNotebookManager'
-    c.SwiftNotebookManager.account_name = USER_NAME
-    c.SwiftNotebookManager.account_key = API_KEY
-    c.SwiftNotebookManager.container_name = u'notebooks'
-    c.SwiftNotebookManager.auth_endpoint = u'127.0.0.1:8021'
-    c.SwiftNotebookManager.tenant_id = TENANT_ID
-    c.SwiftNotebookManager.tenant_name = TENANT_ID
-    c.SwiftNotebookManager.region = 'RegionOne'
+    c.NotebookApp.notebook_manager_class = 'bookstore.swift.KeystoneNotebookManager'
+    c.KeystoneNotebookManager.account_name = USER_NAME
+    c.KeystoneNotebookManager.account_key = API_KEY
+    c.KeystoneNotebookManager.container_name = u'notebooks'
+    c.KeystoneNotebookManager.auth_endpoint = u'127.0.0.1:8021'
+    c.KeystoneNotebookManager.tenant_id = TENANT_ID
+    c.KeystoneNotebookManager.tenant_name = TENANT_NAME
+    c.KeystoneNotebookManager.region = 'RegionOne'
 
 You'll need to replace `USER_NAME` and `API_KEY` with your actual username and
 api key of course. You can get the API key from the cloud control panel after logging in.
@@ -58,7 +58,7 @@ METADATA_NBNAME = 'x-object-meta-nbname'
 
 class SwiftNotebookManager(NotebookManager):
     '''
-    This is a base class to be subclasses by OpenStack providers. The swift
+    This is a base class to be subclassed by OpenStack providers. The swift
     object storage should work across implementations. The big difference is
     authentication which is implemented separately in
     KeystoneAuthNotebookManager and CloudFilesNotebookManager.
@@ -177,13 +177,14 @@ class SwiftNotebookManager(NotebookManager):
         raise web.HTTPError(405, "Checkpoints not implemented")
 
     def info_string(self):
-        info = "Serving notebooks from OpenStack Swift storage: {},{}"
+        info = "Serving {}'s notebooks from OpenStack Swift storage container: {}"
         return info.format(self.account_name, self.container_name)
 
 
-class KeystoneAuthNotebookManager(SwiftNotebookManager):
+class KeystoneNotebookManager(SwiftNotebookManager):
     '''
-    Manages IPython notebooks on OpenStack Swift.
+    Manages IPython notebooks on OpenStack Swift, using Keystone
+    authentication.
 
     Extend this class with the defaults for your OpenStack provider to make
     configuration for clients easier.

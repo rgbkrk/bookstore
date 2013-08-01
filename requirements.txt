@@ -1,3 +1,5 @@
-pyrax
-tornado
--e git+https://github.com/ipython/ipython.git@55dfcbc98cd2f1e2bfc6c9f127c97a746f79c459#egg=ipython
+pyrax==1.4.7
+tornado==3.1
+Jinja2==2.7
+pyzmq==13.1.0
+-e git+https://github.com/ipython/ipython.git@0741b515e0142e3e1e8639294e800576ac2b4a04#egg=ipython

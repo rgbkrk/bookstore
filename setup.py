@@ -14,12 +14,19 @@ if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist upload')
     sys.exit()
 
-requires = ['pyrax>=1.4.7',
-            #'ipython==1.0.0a',
-            'tornado>=3.1',
-            'pyzmq>=13.1.0',
-            'Jinja2>=2.7',
+# When IPython 1.0 releases, this will become packaged for real. For now this
+# just includes the basic requirements for the package. IPython should be
+# installed using git:
+#
+# pip install -e git+https://github.com/ipython/ipython.git@0741b515e0142e3e1e8639294e800576ac2b4a04#egg=ipython
+#
+#
+requires = [
+        'pyrax==1.4.7',
 ]
+
+#with open('requirements.txt') as reqs:
+#    requires = reqs.read().splitlines()
 
 setup(name='bookstore',
       version='0.0.0',
@@ -31,10 +38,7 @@ setup(name='bookstore',
       package_data={'': ['LICENSE']},
       include_package_data=False,
       install_requires=requires,
-      # Can't pull from the zip file as IPython uses git submodules
-      #dependency_links=['-e git+https://github.com/ipython/ipython.git@55dfcbc98cd2f1e2bfc6c9f127c97a746f79c459#egg=ipython'],
       license=open('LICENSE').read(),
-      zip_safe=True,
       classifiers=(
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
