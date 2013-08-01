@@ -39,21 +39,14 @@ api key of course. You can get the API key from the cloud control panel after lo
 # the file LICENSE, distributed as part of this software.
 #-----------------------------------------------------------------------------
 
-import datetime
-
 import pyrax
 from pyrax.exceptions import NoSuchContainer
 
 from tornado import web
 
-from IPython.html.services.notebooks.nbmanager import NotebookManager
 from swift import SwiftNotebookManager
 
-from IPython.nbformat import current
-from IPython.utils.traitlets import Unicode, Instance
-from IPython.utils.tz import utcnow
-
-METADATA_NBNAME = 'x-object-meta-nbname'
+from IPython.utils.traitlets import Unicode
 
 class CloudFilesNotebookManager(SwiftNotebookManager):
     '''
@@ -67,8 +60,6 @@ class CloudFilesNotebookManager(SwiftNotebookManager):
     account_key = Unicode('', config=True, help='Rackspace API Key')
     region = Unicode('DFW', config=True, help='Region')
     identity_type = "rackspace"
-
-    # TODO: Add optional region
 
     def __init__(self, **kwargs):
         super(CloudFilesNotebookManager,self).__init__(**kwargs)
@@ -85,7 +76,7 @@ class CloudFilesNotebookManager(SwiftNotebookManager):
             self.container = self.cf.create_container(self.container_name)
 
     def info_string(self):
-        info = "Serving {}'s notebooks on Rackspace CloudFiles from container: {}"
-        return info.format(self.account_name, self.container_name)
+        info = "Serving {}'s notebooks on Rackspace CloudFiles from container {} in {}"
+        return info.format(self.account_name, self.container_name, self.region)
 
 

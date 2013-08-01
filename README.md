@@ -102,3 +102,5 @@ c.CloudFilesNotebookManager.container_name = u'notebooks'
 You'll need to replace `USER_NAME` and `API_KEY` with your actual username and
 api key of course. You can get the API key from the cloud control panel after logging in.
 
+Note: If you're using Rackspace UK, you'll want to set your region to `'LON'`.
+

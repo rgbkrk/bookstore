@@ -51,7 +51,7 @@ from tornado import web
 from IPython.html.services.notebooks.nbmanager import NotebookManager
 
 from IPython.nbformat import current
-from IPython.utils.traitlets import Unicode, Instance
+from IPython.utils.traitlets import Unicode
 from IPython.utils.tz import utcnow
 
 METADATA_NBNAME = 'x-object-meta-nbname'
