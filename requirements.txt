@@ -2,4 +2,4 @@ pyrax==1.4.7
 tornado==3.1
 Jinja2==2.7
 pyzmq==13.1.0
--e git+https://github.com/ipython/ipython.git@0741b515e0142e3e1e8639294e800576ac2b4a04#egg=ipython
+ipython==1.0.0a1

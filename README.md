@@ -27,29 +27,22 @@ $ ipython notebook
 
 # Installation
 
-This package works against the dev version of IPython 1.0.0. If you already
-have IPython + IPython notebook dependencies installed (perhaps to a virtualenv), then simply
+This version requires IPython 1.0.0a1 and will pull the [alpha release tarball](http://archive.ipython.org/testing/1.0.0/ipython-1.0.0a1.tar.gz#egg=ipython-1.0.0a1) as mentioned in the [notice to IPython-dev](http://mail.scipy.org/pipermail/ipython-dev/2013-July/011994.html). You probably want to install this to a virtualenv or it will likely overwrite your current IPython installation. When the full release comes out, this should get a little easier to setup.
+
+Simply
+
+```
+pip install -e git+https://github.com/rgbkrk/bookstore.git
+```
+
+Or clone this repo and run setup.py:
 
 ```
 $ python setup.py install
 ```
 
-or
-
-```
-$ pip install -e .
-```
-
-If however you want to install everything including IPython 1.0:
-
-```bash
-# This will install a specific dev version of IPython 1.0
-$ pip install -r requirements.txt
-$ python setup.py install
-```
-
-Installation isn't the end though as you'll need to configure your user and api
-key within your IPython profile.
+Installation isn't the end though as you'll need to configure which
+NotebookManager you will use as well as account details.
 
 # Configuration
 
