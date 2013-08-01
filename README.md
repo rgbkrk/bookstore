@@ -29,9 +29,15 @@ $ ipython notebook
 
 This version requires IPython 1.0.0a1 and will pull the [alpha release tarball](http://archive.ipython.org/testing/1.0.0/ipython-1.0.0a1.tar.gz#egg=ipython-1.0.0a1) as mentioned in the [notice to IPython-dev](http://mail.scipy.org/pipermail/ipython-dev/2013-July/011994.html). You probably want to install this to a virtualenv or it will likely overwrite your current IPython installation. When the full release comes out, this should get a little easier to setup.
 
-Simply
+Simply:
 
+```bash
+pip install bookstore
 ```
+
+You can always pull from the master branch if you're the adventurous type:
+
+```bash
 pip install -e git+https://github.com/rgbkrk/bookstore.git
 ```
 
@@ -59,6 +65,8 @@ $ ipython profile create swifty_ipy
 
 Or just add it to your default configuration, which should be located at
 `~/.ipython/profile_default/ipython_notebook_config.py`.
+
+Each provider has their own setup for authentication.
 
 ## On OpenStack Swift using Keystone Authentication
 
