@@ -18,7 +18,7 @@ IPython notebook like normal:
 
 ```bash
 $ ipython notebook
-2013-08-01 13:44:19.199 [NotebookApp] Using existing profile dir: u'/Users/kyle6475/.ipython/profile_default'
+2013-08-01 13:44:19.199 [NotebookApp] Using existing profile dir: u'/Users/rgbkrk/.ipython/profile_default'
 2013-08-01 13:44:25.384 [NotebookApp] Using MathJax from CDN: http://cdn.mathjax.org/mathjax/latest/MathJax.js
 2013-08-01 13:44:25.400 [NotebookApp] Serving rgbkrk's notebooks on Rackspace CloudFiles from container: notebooks
 2013-08-01 13:44:25.400 [NotebookApp] The IPython Notebook is running at: http://127.0.0.1:9999/
