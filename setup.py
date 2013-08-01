@@ -30,7 +30,7 @@ requires = [
 
 setup(name='bookstore',
       version='0.0.0',
-      description='IPython notebook manager for OpenStack Swift and Rackspace',
+      description='Stores IPython notebooks to cloud storage providers including OpenStack Swift and Rackspace CloudFiles',
       author='Kyle Kelley',
       author_email='rgbkrk@gmail.com',
       url='http://github.com/rgbkrk/bookstore',

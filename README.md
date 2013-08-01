@@ -4,10 +4,10 @@ Bookstore
 Stores IPython notebooks automagically onto object storage with a cloud
 provider.
 
-Currently supports OpenStack and Rackspace. Add your provider with a pull
-request!
+Currently supports OpenStack and Rackspace. *Add your provider with a pull
+request!*
 
-**Note: Bookstore only works against IPython 1.0.0 alpha. Stay tuned.**
+**Note: Bookstore only works against IPython 1.0.0 alpha.**
 
 Bookstore currently has generic support for OpenStack Swift with simplified
 authentication for Rackspace's CloudFiles. Feel free to make a pull request if
