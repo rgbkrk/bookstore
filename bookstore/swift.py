@@ -68,6 +68,7 @@ class SwiftNotebookManager(NotebookManager):
 
     def __init__(self, **kwargs):
         super(SwiftNotebookManager, self).__init__(**kwargs)
+        pyrax.set_setting("custom_user_agent", "bookstore")
 
     def load_notebook_names(self):
         """On startup load the notebook ids and names from OpenStack Swift.
