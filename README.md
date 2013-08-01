@@ -1,10 +1,13 @@
 Bookstore
 =======================
 
-Stores IPython notebooks automagically onto OpenStack Swift.
+Stores IPython notebooks automagically onto object storage with a cloud
+provider.
 
-**Note: This currently only works against the alpha release of IPython 1.0.0.
-Stay tuned.**
+Currently supports OpenStack and Rackspace. Add your provider with a pull
+request!
+
+**Note: Bookstore only works against IPython 1.0.0 alpha. Stay tuned.**
 
 Bookstore currently has generic support for OpenStack Swift with simplified
 authentication for Rackspace's CloudFiles. Feel free to make a pull request if
@@ -64,21 +67,6 @@ $ ipython profile create swifty_ipy
 Or just add it to your default configuration, which should be located at
 `~/.ipython/profile_default/ipython_notebook_config.py`.
 
-## On Rackspace's CloudFiles
-
-Add this to your ipython notebook profile (`ipython_notebook_config.py`),
-somewhere after the `c = get_config()` line.
-
-```bash
-c.NotebookApp.notebook_manager_class = 'bookstore.cloudfiles.CloudFilesNotebookManager'
-c.CloudFilesNotebookManager.account_name = USER_NAME
-c.CloudFilesNotebookManager.account_key = API_KEY
-c.CloudFilesNotebookManager.container_name = u'notebooks'
-```
-
-You'll need to replace `USER_NAME` and `API_KEY` with your actual username and
-api key of course. You can get the API key from the cloud control panel after logging in.
-
 ## On OpenStack Swift using Keystone Authentication
 
 OpenStack (generic, non provider specific) has quite a few details you'll need
@@ -98,4 +86,19 @@ c.KeystoneNotebookManager.tenant_id = TENANT_ID
 c.KeystoneNotebookManager.tenant_name = TENANT_NAME
 c.KeystoneNotebookManager.region = 'RegionOne'
 ```
+
+## On Rackspace's CloudFiles
+
+Add this to your ipython notebook profile (`ipython_notebook_config.py`),
+somewhere after the `c = get_config()` line.
+
+```bash
+c.NotebookApp.notebook_manager_class = 'bookstore.cloudfiles.CloudFilesNotebookManager'
+c.CloudFilesNotebookManager.account_name = USER_NAME
+c.CloudFilesNotebookManager.account_key = API_KEY
+c.CloudFilesNotebookManager.container_name = u'notebooks'
+```
+
+You'll need to replace `USER_NAME` and `API_KEY` with your actual username and
+api key of course. You can get the API key from the cloud control panel after logging in.
 
