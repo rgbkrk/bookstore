@@ -18,7 +18,7 @@ with open('requirements.txt') as reqs:
     requires = reqs.read().splitlines()
 
 setup(name='bookstore',
-      version='0.0.0',
+      version='0.0.1a',
       description='Stores IPython notebooks to cloud storage providers including OpenStack Swift and Rackspace CloudFiles',
       author='Kyle Kelley',
       author_email='rgbkrk@gmail.com',
