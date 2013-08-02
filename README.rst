@@ -6,7 +6,7 @@ Stores IPython notebooks automagically onto OpenStack clouds through Swift.
 **Note: Bookstore only works against IPython 1.0.0 alpha, but is ready for
 1.0's release.**
 
-Currently supports OpenStack and Rackspace.
+Currently supports OpenStack Swift with Keystone authentication and Rackspace.
 
 *Add your provider with a pull request!*
 
@@ -80,10 +80,6 @@ sure it comes after the config declaration ``c = get_config()``.
 
 .. code-block:: python
 
-    c = get_config()
-
-    ... # All your other nifty configuration can go here
-
     # Setup IPython Notebook to write notebooks to a Swift Cluster
     # that uses Keystone for authentication
     c.NotebookApp.notebook_manager_class = 'bookstore.swift.KeystoneNotebookManager'
@@ -111,7 +107,7 @@ sure it comes after the config declaration ``c = get_config()``.
 
 .. code-block:: python
 
-    # Sets up IPython Notebook to write notebooks to CloudFiles
+    # Setup IPython Notebook to write notebooks to CloudFiles
     c.NotebookApp.notebook_manager_class = 'bookstore.cloudfiles.CloudFilesNotebookManager'
 
     # Set up your user name and password
