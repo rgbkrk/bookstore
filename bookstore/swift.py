@@ -216,4 +216,3 @@ class KeystoneNotebookManager(SwiftNotebookManager):
         except NoSuchContainer:
             self.container = self.cf.create_container(self.container_name)
 
-

@@ -5,6 +5,8 @@
 import os
 import sys
 
+import bookstore
+
 try:
     from setuptools import setup
 except ImportError:
@@ -14,21 +16,26 @@ if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist upload')
     sys.exit()
 
+packages = ['bookstore']
+requires = []
+
 with open('requirements.txt') as reqs:
     requires = reqs.read().splitlines()
 
 setup(name='bookstore',
-      version='0.0.2a',
+      version=bookstore.__version__,
       description='IPython notebook storage on OpenStack Swift + Rackspace.',
+      long_description=open('README.rst').read(),
       author='Kyle Kelley',
       author_email='rgbkrk@gmail.com',
       url='http://github.com/rgbkrk/bookstore',
-      packages = ['bookstore'],
+      packages = packages,
       package_data={'': ['LICENSE']},
       include_package_data=False,
       install_requires=requires,
       dependency_links=['http://archive.ipython.org/testing/1.0.0/ipython-1.0.0a1.tar.gz#egg=ipython-1.0.0a1'],
       license=open('LICENSE').read(),
+      zip_safe=False,
       classifiers=(
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',

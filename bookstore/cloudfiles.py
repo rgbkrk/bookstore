@@ -5,16 +5,16 @@
 """
 A notebook manager that uses Rackspace CloudFiles.
 
-ipynb_swiftstore requires IPython 1.0.0a or greater to work.
+bookstore requires IPython 1.0.0a or greater to work.
 
 To use this with IPython, you'll need IPython notebook fully installed
 (ipython, tornado, pyzmq, and Jinja2) and a notebook profile.
 
 It's easy to set up a notebook profile if you don't have one:
 
-    $ ipython profile create swiftstore
-    [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_config.py'
-    [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_notebook_config.py'
+    $ ipython profile create bookstore
+    [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_bookstore/ipython_config.py'
+    [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_bookstore/ipython_notebook_config.py'
 
 You can also use your default config, located at
 
@@ -40,7 +40,6 @@ api key of course. You can get the API key from the cloud control panel after lo
 #-----------------------------------------------------------------------------
 
 import pyrax
-from pyrax.exceptions import NoSuchContainer
 
 from tornado import web
 
@@ -62,8 +61,12 @@ class CloudFilesNotebookManager(SwiftNotebookManager):
     identity_type = "rackspace"
 
     def __init__(self, **kwargs):
+        '''
+        Sets up the NotebookManager using the credentials supplied from the
+        IPython configuration.
+        '''
         super(CloudFilesNotebookManager,self).__init__(**kwargs)
-        pyrax.set_setting("identity_type", "rackspace")
+        pyrax.set_setting("identity_type", self.identity_type)
         # Set the region, optionally
         pyrax.set_setting("region", self.region) # e.g. "LON"
 
@@ -76,7 +79,10 @@ class CloudFilesNotebookManager(SwiftNotebookManager):
             self.container = self.cf.create_container(self.container_name)
 
     def info_string(self):
-        info = "Serving {}'s notebooks on Rackspace CloudFiles from container {} in {}"
+        '''
+        Returns a status string about the Rackspace CloudFiles Notebook Manager
+        '''
+        info = "Serving {}'s notebooks on Rackspace CloudFiles from container {} in {} region."
         return info.format(self.account_name, self.container_name, self.region)
 
 
