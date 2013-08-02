@@ -1,10 +1,10 @@
 Bookstore
 =========
 
-Stores IPython notebooks automagically onto object storage with a cloud
-provider.
+Stores IPython notebooks automagically onto OpenStack clouds through Swift.
 
-**Note: Bookstore only works against IPython 1.0.0 alpha.**
+**Note: Bookstore only works against IPython 1.0.0 alpha, but is ready for
+1.0's release.**
 
 Currently supports OpenStack and Rackspace.
 
@@ -76,7 +76,7 @@ to configure, namely account name, account key, auth endpoint, and region.
 You'll possibly need a tenant id and a tenant name.
 
 Add this to your ipython notebook profile *ipython_notebook_config.py*, making
-sure it comes after the config declaration.
+sure it comes after the config declaration ``c = get_config()``.
 
 .. code-block:: python
 
@@ -84,36 +84,45 @@ sure it comes after the config declaration.
 
     ... # All your other nifty configuration can go here
 
+    # Setup IPython Notebook to write notebooks to a Swift Cluster
+    # that uses Keystone for authentication
     c.NotebookApp.notebook_manager_class = 'bookstore.swift.KeystoneNotebookManager'
+
+    # Account details for OpenStack
     c.KeystoneNotebookManager.account_name = USER_NAME
     c.KeystoneNotebookManager.account_key = API_KEY
-    c.KeystoneNotebookManager.container_name = u'notebooks'
     c.KeystoneNotebookManager.auth_endpoint = u'127.0.0.1:8021'
     c.KeystoneNotebookManager.tenant_id = TENANT_ID
     c.KeystoneNotebookManager.tenant_name = TENANT_NAME
     c.KeystoneNotebookManager.region = 'RegionOne'
 
+    # Container on OpenStack Swift
+    c.KeystoneNotebookManager.container_name = u'notebooks'
+
+You will of course need to set these options according to your implementation.
+
 On Rackspace's CloudFiles
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
+The Rackspace CloudFileNotebookManager simply needs your ``USER_NAME`` and ``API_KEY``. You can also configure the region to store your notebooks (e.g. ``'SYD'``, ``'ORD'``, ``'DFW'``, ``'LON'``). Note: If you're using Rackspace UK, set your region to ``'LON'``.
+
 Add this to your ipython notebook profile *ipython_notebook_config.py*, making
-sure it comes after the config declaration.
+sure it comes after the config declaration ``c = get_config()``.
 
 .. code-block:: python
 
-    c = get_config()
-
-    ... # All your other nifty configuration can go here
-
+    # Sets up IPython Notebook to write notebooks to CloudFiles
     c.NotebookApp.notebook_manager_class = 'bookstore.cloudfiles.CloudFilesNotebookManager'
+
+    # Set up your user name and password
     c.CloudFilesNotebookManager.account_name = USER_NAME
     c.CloudFilesNotebookManager.account_key = API_KEY
+
+    # Container on CloudFiles
     c.CloudFilesNotebookManager.container_name = u'notebooks'
 
 You'll need to replace ``USER_NAME`` and ``API_KEY`` with your actual username and
 api key of course. You can get the API key from the cloud control panel after logging in.
-
-Note: If you're using Rackspace UK, you'll want to set your region to ``'LON'``.
 
 Contributing
 ------------
