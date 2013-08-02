@@ -31,7 +31,7 @@ setup(name='bookstore',
       package_data={'': ['LICENSE']},
       include_package_data=False,
       install_requires=requires,
-      dependency_links=['http://archive.ipython.org/testing/1.0.0/ipython-1.0.0a1.tar.gz#egg=ipython-1.0.0a1'],
+      dependency_links=['https://github.com/ipython/ipython/archive/1.0.0a1.tar.gz#egg=ipython-1.0.0a1'],
       license=open('LICENSE').read(),
       zip_safe=False,
       classifiers=(
