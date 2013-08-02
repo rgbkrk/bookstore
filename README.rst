@@ -29,7 +29,7 @@ IPython notebook like normal:
 Installation
 ------------
 
-This version requires IPython 1.0.0a1 and will pull the `alpha release tarball<http://archive.ipython.org/testing/1.0.0/ipython-1.0.0a1.tar.gz#egg=ipython-1.0.0a1>`_ as mentioned in the `notice to IPython-dev<http://mail.scipy.org/pipermail/ipython-dev/2013-July/011994.html>`_. You probably want to *install this to a virtualenv* or it will likely overwrite your current IPython installation. When the full release comes out, this should get a little easier to setup.
+This version requires IPython 1.0.0a1 and will pull the `alpha release tarball <http://archive.ipython.org/testing/1.0.0/ipython-1.0.0a1.tar.gz#egg=ipython-1.0.0a1>`_ as mentioned in the `notice to IPython-dev <http://mail.scipy.org/pipermail/ipython-dev/2013-July/011994.html>`_. You probably want to *install this to a virtualenv* or it will likely overwrite your current IPython installation. When the full release comes out, this should get a little easier to setup.
 
 Simply:
 
@@ -118,6 +118,6 @@ Note: If you're using Rackspace UK, you'll want to set your region to ``'LON'``.
 Contributing
 ------------
 
-Send a pull request on `GitHub<http://www.github.com/rgbkrk/bookstore>`_. It's
+Send a pull request on `GitHub <http://www.github.com/rgbkrk/bookstore>`_. It's
 that simple.
 
