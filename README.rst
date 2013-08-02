@@ -10,7 +10,7 @@ Currently supports OpenStack and Rackspace.
 
 *Add your provider with a pull request!*
 
-Bookstore currently has generic support for OpenStack Swift with simplified
+Bookstore currently has generic support for OpenStack Swift and simplified
 authentication for Rackspace's CloudFiles. Feel free to make a pull request if
 you want a notebook manager for your implementation.
 
@@ -43,10 +43,11 @@ Alternatively, you can always pull from the master branch if you're the adventur
 
     $ pip install -e git+https://github.com/rgbkrk/bookstore.git
 
-Installation isn't the end though as you'll need to configure which
-NotebookManager you will use as well as account details.
+Installation isn't the end though. You need to configure your account details
+as well as where you'll be storing the notebooks.
 
-# Configuration
+Configuration
+-------------
 
 Bookstore has to be added to an IPython profile and configured to work with
 your provider.
@@ -60,7 +61,7 @@ You can create a brand new notebook profile for bookstore:
     [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_notebook_config.py'
 
 Or just add it to your default configuration, which should be located at
-`~/.ipython/profile_default/ipython_notebook_config.py`.
+``~/.ipython/profile_default/ipython_notebook_config.py``.
 
 Each provider has their own setup for authentication.
 
@@ -71,8 +72,8 @@ OpenStack (generic, non provider specific) has quite a few details you'll need
 to configure, namely account name, account key, auth endpoint, and region.
 You'll possibly need a tenant id and a tenant name.
 
-Add this to your ipython notebook profile (`ipython_notebook_config.py`),
-somewhere after the `c = get_config()` line.
+Add this to your ipython notebook profile (``ipython_notebook_config.py``),
+somewhere after the ``c = get_config()`` line.
 
 .. code-block:: python
 
@@ -88,8 +89,8 @@ somewhere after the `c = get_config()` line.
 On Rackspace's CloudFiles
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Add this to your ipython notebook profile (`ipython_notebook_config.py`),
-somewhere after the `c = get_config()` line.
+Add this to your ipython notebook profile (``ipython_notebook_config.py``),
+somewhere after the ``c = get_config()`` line.
 
 .. code-block:: python
 
@@ -98,12 +99,14 @@ somewhere after the `c = get_config()` line.
     c.CloudFilesNotebookManager.account_key = API_KEY
     c.CloudFilesNotebookManager.container_name = u'notebooks'
 
-You'll need to replace `USER_NAME` and `API_KEY` with your actual username and
+You'll need to replace ``USER_NAME`` and ``API_KEY`` with your actual username and
 api key of course. You can get the API key from the cloud control panel after logging in.
 
-Note: If you're using Rackspace UK, you'll want to set your region to `'LON'`.
+Note: If you're using Rackspace UK, you'll want to set your region to ``'LON'``.
 
 Contributing
 ------------
 
-Send a pull request!
+Send a pull request on `GitHub<http://www.github.com/rgbkrk/bookstore>`. It's
+that simple.
+
