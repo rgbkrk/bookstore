@@ -67,8 +67,7 @@ class CloudFilesNotebookManager(SwiftNotebookManager):
         '''
         super(CloudFilesNotebookManager,self).__init__(**kwargs)
         pyrax.set_setting("identity_type", self.identity_type)
-        # Set the region, optionally
-        pyrax.set_setting("region", self.region) # e.g. "LON"
+        pyrax.set_setting("region", self.region)
 
         pyrax.set_credentials(username=self.account_name, api_key=self.account_key)
         self.cf = pyrax.cloudfiles
@@ -84,5 +83,4 @@ class CloudFilesNotebookManager(SwiftNotebookManager):
         '''
         info = "Serving {}'s notebooks on Rackspace CloudFiles from container {} in {} region."
         return info.format(self.account_name, self.container_name, self.region)
-
 

@@ -18,7 +18,8 @@ You can also use your default config, located at
 
 ~/.ipython/profile_default/ipython_notebook_config.py
 
-Now, add this to your ipython notebook profile (`ipython_notebook_config.py`):
+Now, add this to your ipython notebook profile (`ipython_notebook_config.py`),
+filling in details for your OpenStack implementation.
 
     c.NotebookApp.notebook_manager_class = 'bookstore.swift.KeystoneNotebookManager'
     c.KeystoneNotebookManager.account_name = USER_NAME
@@ -28,9 +29,6 @@ Now, add this to your ipython notebook profile (`ipython_notebook_config.py`):
     c.KeystoneNotebookManager.tenant_id = TENANT_ID
     c.KeystoneNotebookManager.tenant_name = TENANT_NAME
     c.KeystoneNotebookManager.region = 'RegionOne'
-
-You'll need to replace `USER_NAME` and `API_KEY` with your actual username and
-api key of course. You can get the API key from the cloud control panel after logging in.
 
 """
 
@@ -54,6 +52,8 @@ from IPython.nbformat import current
 from IPython.utils.traitlets import Unicode
 from IPython.utils.tz import utcnow
 
+from bookstore import __version__
+
 METADATA_NBNAME = 'x-object-meta-nbname'
 
 class SwiftNotebookManager(NotebookManager):
@@ -64,11 +64,12 @@ class SwiftNotebookManager(NotebookManager):
     KeystoneAuthNotebookManager and CloudFilesNotebookManager.
     '''
 
+    user_agent = "bookstore v{version}".format(version=__version__)
     container_name = Unicode('notebooks', config=True, help='Container name for notebooks.')
 
     def __init__(self, **kwargs):
         super(SwiftNotebookManager, self).__init__(**kwargs)
-        pyrax.set_setting("custom_user_agent", "bookstore")
+        pyrax.set_setting("custom_user_agent", self.user_agent)
 
     def load_notebook_names(self):
         """On startup load the notebook ids and names from OpenStack Swift.
