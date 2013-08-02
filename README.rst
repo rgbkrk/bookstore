@@ -3,8 +3,7 @@ Bookstore
 
 Stores IPython notebooks automagically onto OpenStack clouds through Swift.
 
-**Note: Bookstore only works against IPython 1.0.0 alpha, but is ready for
-1.0's release.**
+**Note: Bookstore only works against IPython 1.0.0+**
 
 Currently supports OpenStack Swift with Keystone authentication and Rackspace.
 
@@ -29,7 +28,7 @@ IPython notebook like normal:
 Installation
 ------------
 
-This version requires IPython 1.0.0a1 and will pull the `alpha release tarball <http://archive.ipython.org/testing/1.0.0/ipython-1.0.0a1.tar.gz#egg=ipython-1.0.0a1>`_ as mentioned in the `notice to IPython-dev <http://mail.scipy.org/pipermail/ipython-dev/2013-July/011994.html>`_. You probably want to *install this to a virtualenv* or it will likely overwrite your current IPython installation. When the full release comes out, this should get a little easier to setup.
+This version requires IPython 1.0.0-rc1 or 1.0.0a1 and will pull the `release candidate 1 tarball <http://archive.ipython.org/testing/1.0.0/ipython-1.0.0-rc1.tar.gz#egg=ipython-1.0.0-rc1>`_ as mentioned in the `notice to IPython-dev <http://mail.scipy.org/pipermail/ipython-dev/2013-August/012058.html>`_. You probably want to *install this to a virtualenv* or it will likely overwrite your current IPython installation. When the full release comes out, this should get a little easier to setup.
 
 Simply:
 

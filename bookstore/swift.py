@@ -5,20 +5,9 @@
 """
 A notebook manager that uses OpenStack Swift object storage.
 
-To use this with IPython, you'll need IPython notebook fully installed
-(ipython, tornado, pyzmq, and Jinja2) and a notebook profile.
+Requires IPython 1.0.0+
 
-It's easy to set up a notebook profile if you don't have one:
-
-    $ ipython profile create swiftstore
-    [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_config.py'
-    [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_notebook_config.py'
-
-You can also use your default config, located at
-
-~/.ipython/profile_default/ipython_notebook_config.py
-
-Now, add this to your ipython notebook profile (`ipython_notebook_config.py`),
+Add this to your ipython notebook profile (`ipython_notebook_config.py`),
 filling in details for your OpenStack implementation.
 
     c.NotebookApp.notebook_manager_class = 'bookstore.swift.KeystoneNotebookManager'
@@ -29,6 +18,16 @@ filling in details for your OpenStack implementation.
     c.KeystoneNotebookManager.tenant_id = TENANT_ID
     c.KeystoneNotebookManager.tenant_name = TENANT_NAME
     c.KeystoneNotebookManager.region = 'RegionOne'
+
+It's easy to set up a notebook profile if you don't have one:
+
+    $ ipython profile create swiftstore
+    [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_config.py'
+    [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_notebook_config.py'
+
+You can also use your default config, located at
+
+~/.ipython/profile_default/ipython_notebook_config.py
 
 """
 
