@@ -61,7 +61,10 @@ You can create a brand new notebook profile for bookstore:
     [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_notebook_config.py'
 
 Or just add it to your default configuration, which should be located at
-``~/.ipython/profile_default/ipython_notebook_config.py``.
+
+.. code-block:: bash
+
+    ~/.ipython/profile_default/ipython_notebook_config.py
 
 Each provider has their own setup for authentication.
 
@@ -72,10 +75,14 @@ OpenStack (generic, non provider specific) has quite a few details you'll need
 to configure, namely account name, account key, auth endpoint, and region.
 You'll possibly need a tenant id and a tenant name.
 
-Add this to your ipython notebook profile (``ipython_notebook_config.py``),
-somewhere after the ``c = get_config()`` line.
+Add this to your ipython notebook profile *ipython_notebook_config.py*, making
+sure it comes after the config declaration.
 
 .. code-block:: python
+
+    c = get_config()
+
+    ... # All your other nifty configuration can go here
 
     c.NotebookApp.notebook_manager_class = 'bookstore.swift.KeystoneNotebookManager'
     c.KeystoneNotebookManager.account_name = USER_NAME
@@ -89,10 +96,14 @@ somewhere after the ``c = get_config()`` line.
 On Rackspace's CloudFiles
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Add this to your ipython notebook profile (``ipython_notebook_config.py``),
-somewhere after the ``c = get_config()`` line.
+Add this to your ipython notebook profile *ipython_notebook_config.py*, making
+sure it comes after the config declaration.
 
 .. code-block:: python
+
+    c = get_config()
+
+    ... # All your other nifty configuration can go here
 
     c.NotebookApp.notebook_manager_class = 'bookstore.cloudfiles.CloudFilesNotebookManager'
     c.CloudFilesNotebookManager.account_name = USER_NAME
