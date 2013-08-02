@@ -5,8 +5,6 @@
 import os
 import sys
 
-import bookstore
-
 try:
     from setuptools import setup
 except ImportError:
@@ -23,7 +21,7 @@ with open('requirements.txt') as reqs:
     requires = reqs.read().splitlines()
 
 setup(name='bookstore',
-      version=bookstore.__version__,
+      version='0.0.2a',
       description='IPython notebook storage on OpenStack Swift + Rackspace.',
       long_description=open('README.rst').read(),
       author='Kyle Kelley',
