@@ -70,6 +70,9 @@ class SwiftNotebookManager(NotebookManager):
         super(SwiftNotebookManager, self).__init__(**kwargs)
         pyrax.set_setting("custom_user_agent", self.user_agent)
 
+        # A dictionary mapping notebook ids to lists of checkpoints
+        self.next_checkpoint = {}
+
     def load_notebook_names(self):
         """On startup load the notebook ids and names from OpenStack Swift.
 
@@ -98,7 +101,9 @@ class SwiftNotebookManager(NotebookManager):
         return data
 
     def read_notebook_object(self, notebook_id):
-        """Get the object representation of a notebook by notebook_id."""
+        '''
+        Get the object representation of a notebook by notebook_id.
+        '''
         if not self.notebook_exists(notebook_id):
             raise web.HTTPError(404, u'Notebook does not exist: %s' % notebook_id)
         try:
@@ -116,7 +121,9 @@ class SwiftNotebookManager(NotebookManager):
         return last_modified, nb
 
     def write_notebook_object(self, nb, notebook_id=None):
-        """Save an existing notebook object by notebook_id."""
+        '''
+        Save an existing notebook object by notebook_id.
+        '''
 
         try:
             new_name = nb.metadata.name
@@ -145,7 +152,9 @@ class SwiftNotebookManager(NotebookManager):
         return notebook_id
 
     def delete_notebook(self, notebook_id):
-        """Delete notebook by notebook_id."""
+        '''
+        Delete notebook by notebook_id.
+        '''
         if not self.notebook_exists(notebook_id):
             raise web.HTTPError(404, u'Notebook does not exist: %s' % notebook_id)
         try:
@@ -156,26 +165,125 @@ class SwiftNotebookManager(NotebookManager):
             self.delete_notebook_id(notebook_id)
 
 
-    # Checkpoint-related
+    def get_checkpoint_path(self, notebook_id, checkpoint_id):
+        '''
+        Returns the canonical checkpoint path based on the notebook_id and
+        checkpoint_id
+        '''
+        checkpoint_path = "{}/checkpoints/{}".format(notebook_id, checkpoint_id)
+        return checkpoint_path
+
+    # Required Checkpoint methods
 
     def create_checkpoint(self, notebook_id):
-        """Create a checkpoint of the current state of a notebook
+        '''
+        Create a checkpoint of the current state of a notebook
 
         Returns a checkpoint_id for the new checkpoint.
-        """
-        raise web.HTTPError(405, "Checkpoints not implemented")
+        '''
+
+        self.log.debug("Creating checkpoint for notebook {}".format(
+                        notebook_id))
+
+        # We pull the next available checkpoint #
+        checkpoint_id = self.next_checkpoint.get(notebook_id,0)
+
+        checkpoint_path = self.get_checkpoint_path(notebook_id, checkpoint_id)
+
+        try:
+            data = current.writes(nb, u'json')
+        except Exception as e:
+            raise web.HTTPError(400, u'Unexpected error while saving checkpoint: {}'.format(e)
+
+        last_modified = utcnow()
+
+        metadata = {
+            METADATA_CHK_ID: checkpoint_id,
+            METADATA_LAST_MODIFIED: last_modified,
+            METADATA_NB_ID: notebook_id
+        }
+
+        try:
+            obj = self.container.store_object(checkpoint_path, data)
+            obj.set_metadata(metadata)
+        except Exception as e:
+            raise web.HTTPError(400, u'Unexpected error while saving checkpoint: {}'.format(e)
+
+
+        info = dict(
+                checkpoint_id = checkpoint_id,
+                last_modified = last_modified,
+        )
+
+        self.next_checkpoint[notebook_id] = checkpoint_id + 1
+
+        return info
 
     def list_checkpoints(self, notebook_id):
-        """Return a list of checkpoints for a given notebook"""
-        raise web.HTTPError(405, "Checkpoints not implemented")
+        '''
+        Return a list of checkpoints for a given notebook
+        '''
+        # Going to have to re-think this later
+        try:
+            objects = self.container.get_objects()
+
+            chkpoints = []
+            for obj in objects:
+                if(notebook_id in obj.name and "checkpoints" in obj.name):
+                    try:
+                        metadata = obj.get_metadata()
+                        info = dict(
+                            checkpoint_id = metadata[METADATA_CHK_ID],
+                            last_modified = metadata[METADATA_LAST_MODIFIED]
+                        )
+                        chkpoints.append(info)
+                    except Exception as e:
+                        self.log.error("Unable to pull metadata")
+                        pass
+
+        except Exception as e:
+            raise web.HTTPError(400, "Unexpected error while listing checkpoints")
 
     def restore_checkpoint(self, notebook_id, checkpoint_id):
-        """Restore a notebook from one of its checkpoints"""
-        raise web.HTTPError(405, "Checkpoints not implemented")
+        '''
+        Restore a notebook from one of its checkpoints
+        '''
+        if not self.notebook_exists(notebook_id):
+            raise web.HTTPError(404, u'Notebook does not exist: %s' % notebook_id)
+
+        checkpoint_path = self.get_checkpoint_path(notebook_id, checkpoint_id)
+
+        try:
+            obj = self.container.get_object(checkpoint_path)
+            s = obj.get() # Read the file into s
+        except:
+            raise web.HTTPError(500, u'Checkpoint cannot be read.')
+
+        try:
+            nb = current.reads(s, u'json')
+        except:
+            raise web.HTTPError(500, u'Unreadable JSON notebook.')
+
+        metadata = obj.get_metadata()
+
+        last_modified = metadata[METADATA_LAST_MODIFIED]
+
+        return last_modified, nb
+
 
     def delete_checkpoint(self, notebook_id, checkpoint_id):
-        """delete a checkpoint for a notebook"""
-        raise web.HTTPError(405, "Checkpoints not implemented")
+        '''
+        Delete a checkpoint for a notebook
+        '''
+        if not self.notebook_exists(notebook_id):
+            raise web.HTTPError(404, u'Notebook does not exist: %s' % notebook_id)
+
+        checkpoint_path = self.get_checkpoint_path(notebook_id, checkpoint_id)
+
+        try:
+            self.container.delete_object(checkpoint_path)
+        except Exception as e:
+            raise web.HTTPError(400, u'Unexpected error while deleting notebook: %s' % e)
 
     def info_string(self):
         info = "Serving {}'s notebooks from OpenStack Swift storage container: {}"
