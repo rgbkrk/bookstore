@@ -38,8 +38,7 @@ You can also use your default config, located at
 # the file LICENSE, distributed as part of this software.
 #-----------------------------------------------------------------------------
 
-import datetime
-import time
+from datetime import datetime
 
 import pyrax
 from pyrax.exceptions import NoSuchContainer
@@ -56,8 +55,10 @@ from bookstore import __version__
 
 METADATA_NBNAME = 'x-object-meta-nbname'
 METADATA_CHK_ID = 'x-object-meta-checkpoint-id'
-METADATA_LAST_MODIFIED = 'x-object-meta-nb-last-modified',
+METADATA_LAST_MODIFIED = 'x-object-meta-nb-last-modified'
 METADATA_NB_ID = 'x-object-meta-notebook-id'
+
+DATE_FORMAT = "%X-%x"
 
 class SwiftNotebookManager(NotebookManager):
     '''
@@ -190,7 +191,7 @@ class SwiftNotebookManager(NotebookManager):
                         notebook_id))
 
         # We pull the next available checkpoint #
-        checkpoint_id = str(self.next_checkpoint.get(notebook_id,0))
+        checkpoint_id = unicode(self.next_checkpoint.setdefault(notebook_id,0))
 
         checkpoint_path = self.get_checkpoint_path(notebook_id, checkpoint_id)
 
@@ -198,9 +199,10 @@ class SwiftNotebookManager(NotebookManager):
 
         metadata = {
             METADATA_CHK_ID: checkpoint_id,
-            #METADATA_LAST_MODIFIED: last_modified.strftime('%X-%x'),
+            METADATA_LAST_MODIFIED: last_modified.strftime(DATE_FORMAT),
             METADATA_NB_ID: notebook_id
         }
+        print("Storing metadataaaaaa: {}".format(metadata))
 
         try:
             print("copy notebook: {} -> {}".format(notebook_id, checkpoint_path))
@@ -232,7 +234,10 @@ class SwiftNotebookManager(NotebookManager):
         '''
         Return a list of checkpoints for a given notebook
         '''
-        # Going to have to re-think this later
+        # Going to have to re-think this later. This is just something to try
+        # out for the moment
+        self.log.debug("Listing checkpoints for notebook {}".format(
+                        notebook_id))
         try:
             objects = self.container.get_objects()
 
@@ -240,18 +245,27 @@ class SwiftNotebookManager(NotebookManager):
             for obj in objects:
                 if(notebook_id in obj.name and "checkpoints" in obj.name):
                     try:
+                        print("Getting metadata")
                         metadata = obj.get_metadata()
+                        print("MetaDATAAAAAA: {}".format(metadata))
+                        last_modified = datetime.strptime(metadata[METADATA_LAST_MODIFIED],
+                                DATE_FORMAT)
+                        print(last_modified)
                         info = dict(
                             checkpoint_id = metadata[METADATA_CHK_ID],
-                            last_modified = strptime(metadata[METADATA_LAST_MODIFIED],'%X-%x')
+                            last_modified = metadata[METADATA_LAST_MODIFIED],
                         )
                         chkpoints.append(info)
+                        print(chkpoints)
                     except Exception as e:
                         self.log.error("Unable to pull metadata")
+                        print(e)
                         pass
 
         except Exception as e:
             raise web.HTTPError(400, "Unexpected error while listing checkpoints")
+
+        return chkpoints
 
     def restore_checkpoint(self, notebook_id, checkpoint_id):
         '''
@@ -259,6 +273,10 @@ class SwiftNotebookManager(NotebookManager):
 
         Actually overwrites the existing notebook
         '''
+
+        self.log.debug("Restoring checkpoint {} for notebook {}".format(
+                        checkpoint_id, notebook_id))
+
         if not self.notebook_exists(notebook_id):
             raise web.HTTPError(404, u'Notebook does not exist: %s' % notebook_id)
 
@@ -276,6 +294,10 @@ class SwiftNotebookManager(NotebookManager):
         '''
         Delete a checkpoint for a notebook
         '''
+
+        self.log.debug("Deleting checkpoint {} for notebook {}".format(
+                        checkpoint_id, notebook_id))
+
         if not self.notebook_exists(notebook_id):
             raise web.HTTPError(404, u'Notebook does not exist: %s' % notebook_id)
 
