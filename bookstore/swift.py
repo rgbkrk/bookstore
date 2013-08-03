@@ -93,8 +93,9 @@ class SwiftNotebookManager(NotebookManager):
             nb_id = obj.name
             metadata = obj.get_metadata()
 
-            name = metadata[METADATA_NBNAME]
-            self.mapping[nb_id] = name
+            if(metadata.has_key(METADATA_NBNAME)):
+                name = metadata[METADATA_NBNAME]
+                self.mapping[nb_id] = name
 
     def list_notebooks(self):
         """List all notebooks in the container.
@@ -184,13 +185,14 @@ class SwiftNotebookManager(NotebookManager):
         '''
         Create a checkpoint of the current state of a notebook
 
-        Returns a checkpoint_id for the new checkpoint.
+        Returns a dictionary with a checkpoint_id and the timestamp from the
+        last modification
         '''
 
         self.log.debug("Creating checkpoint for notebook {}".format(
                         notebook_id))
 
-        # We pull the next available checkpoint #
+        # We pull the next available checkpoint id (1UP)
         checkpoint_id = unicode(self.next_checkpoint.setdefault(notebook_id,0))
 
         checkpoint_path = self.get_checkpoint_path(notebook_id, checkpoint_id)
@@ -202,20 +204,16 @@ class SwiftNotebookManager(NotebookManager):
             METADATA_LAST_MODIFIED: last_modified.strftime(DATE_FORMAT),
             METADATA_NB_ID: notebook_id
         }
-        print("Storing metadataaaaaa: {}".format(metadata))
-
         try:
-            print("copy notebook: {} -> {}".format(notebook_id, checkpoint_path))
+            self.log.debug("Copying notebook {} to {}".format(
+                notebook_id, checkpoint_path))
             self.cf.copy_object(container=self.container_name,
                        obj_name=notebook_id,
                        new_container=self.container_name,
                        new_obj_name=checkpoint_path)
 
             obj = self.container.get_object(checkpoint_path)
-            print("obj: {}".format(obj))
-            print("metadata: {}".format(metadata))
             obj.set_metadata(metadata)
-            print("Metadata set".format(obj))
 
         except Exception as e:
             raise web.HTTPError(400, u'Unexpected error while saving checkpoint: {}'.format(e))
@@ -245,23 +243,19 @@ class SwiftNotebookManager(NotebookManager):
             for obj in objects:
                 if(notebook_id in obj.name and "checkpoints" in obj.name):
                     try:
-                        print("Getting metadata")
                         metadata = obj.get_metadata()
-                        print("MetaDATAAAAAA: {}".format(metadata))
                         last_modified = datetime.strptime(metadata[METADATA_LAST_MODIFIED],
                                 DATE_FORMAT)
                         last_modified.replace(tzinfo=tzUTC())
-                        print(last_modified)
                         info = dict(
                             checkpoint_id = metadata[METADATA_CHK_ID],
                             last_modified = metadata[METADATA_LAST_MODIFIED],
                         )
                         chkpoints.append(info)
-                        print(chkpoints)
+
                     except Exception as e:
                         self.log.error("Unable to pull metadata")
-                        print(e)
-                        pass
+                        self.log.error("Exception: {}".format(e))
 
         except Exception as e:
             raise web.HTTPError(400, "Unexpected error while listing checkpoints")
