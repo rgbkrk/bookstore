@@ -39,6 +39,7 @@ You can also use your default config, located at
 #-----------------------------------------------------------------------------
 
 import datetime
+import time
 
 import pyrax
 from pyrax.exceptions import NoSuchContainer
@@ -54,6 +55,9 @@ from IPython.utils.tz import utcnow
 from bookstore import __version__
 
 METADATA_NBNAME = 'x-object-meta-nbname'
+METADATA_CHK_ID = 'x-object-meta-checkpoint-id'
+METADATA_LAST_MODIFIED = 'x-object-meta-nb-last-modified',
+METADATA_NB_ID = 'x-object-meta-notebook-id'
 
 class SwiftNotebookManager(NotebookManager):
     '''
@@ -186,28 +190,33 @@ class SwiftNotebookManager(NotebookManager):
                         notebook_id))
 
         # We pull the next available checkpoint #
-        checkpoint_id = self.next_checkpoint.get(notebook_id,0)
+        checkpoint_id = str(self.next_checkpoint.get(notebook_id,0))
 
         checkpoint_path = self.get_checkpoint_path(notebook_id, checkpoint_id)
-
-        try:
-            data = current.writes(nb, u'json')
-        except Exception as e:
-            raise web.HTTPError(400, u'Unexpected error while saving checkpoint: {}'.format(e)
 
         last_modified = utcnow()
 
         metadata = {
             METADATA_CHK_ID: checkpoint_id,
-            METADATA_LAST_MODIFIED: last_modified,
+            #METADATA_LAST_MODIFIED: last_modified.strftime('%X-%x'),
             METADATA_NB_ID: notebook_id
         }
 
         try:
-            obj = self.container.store_object(checkpoint_path, data)
+            print("copy notebook: {} -> {}".format(notebook_id, checkpoint_path))
+            self.cf.copy_object(container=self.container_name,
+                       obj_name=notebook_id,
+                       new_container=self.container_name,
+                       new_obj_name=checkpoint_path)
+
+            obj = self.container.get_object(checkpoint_path)
+            print("obj: {}".format(obj))
+            print("metadata: {}".format(metadata))
             obj.set_metadata(metadata)
+            print("Metadata set".format(obj))
+
         except Exception as e:
-            raise web.HTTPError(400, u'Unexpected error while saving checkpoint: {}'.format(e)
+            raise web.HTTPError(400, u'Unexpected error while saving checkpoint: {}'.format(e))
 
 
         info = dict(
@@ -215,7 +224,7 @@ class SwiftNotebookManager(NotebookManager):
                 last_modified = last_modified,
         )
 
-        self.next_checkpoint[notebook_id] = checkpoint_id + 1
+        self.next_checkpoint[notebook_id] = self.next_checkpoint[notebook_id] + 1
 
         return info
 
@@ -234,7 +243,7 @@ class SwiftNotebookManager(NotebookManager):
                         metadata = obj.get_metadata()
                         info = dict(
                             checkpoint_id = metadata[METADATA_CHK_ID],
-                            last_modified = metadata[METADATA_LAST_MODIFIED]
+                            last_modified = strptime(metadata[METADATA_LAST_MODIFIED],'%X-%x')
                         )
                         chkpoints.append(info)
                     except Exception as e:
@@ -246,7 +255,9 @@ class SwiftNotebookManager(NotebookManager):
 
     def restore_checkpoint(self, notebook_id, checkpoint_id):
         '''
-        Restore a notebook from one of its checkpoints
+        Restore a notebook from one of its checkpoints.
+
+        Actually overwrites the existing notebook
         '''
         if not self.notebook_exists(notebook_id):
             raise web.HTTPError(404, u'Notebook does not exist: %s' % notebook_id)
@@ -254,22 +265,12 @@ class SwiftNotebookManager(NotebookManager):
         checkpoint_path = self.get_checkpoint_path(notebook_id, checkpoint_id)
 
         try:
-            obj = self.container.get_object(checkpoint_path)
-            s = obj.get() # Read the file into s
+            self.cf.copy_object(container=self.container_name,
+                                   obj_name=checkpoint_path,
+                                   new_container=self.container_name,
+                                   new_obj_name=notebook_id)
         except:
-            raise web.HTTPError(500, u'Checkpoint cannot be read.')
-
-        try:
-            nb = current.reads(s, u'json')
-        except:
-            raise web.HTTPError(500, u'Unreadable JSON notebook.')
-
-        metadata = obj.get_metadata()
-
-        last_modified = metadata[METADATA_LAST_MODIFIED]
-
-        return last_modified, nb
-
+            raise web.HTTPError(500, u'Checkpoint could not be restored.')
 
     def delete_checkpoint(self, notebook_id, checkpoint_id):
         '''
