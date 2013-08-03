@@ -49,7 +49,7 @@ from IPython.html.services.notebooks.nbmanager import NotebookManager
 
 from IPython.nbformat import current
 from IPython.utils.traitlets import Unicode
-from IPython.utils.tz import utcnow
+from IPython.utils.tz import utcnow, tzUTC
 
 from bookstore import __version__
 
@@ -250,6 +250,7 @@ class SwiftNotebookManager(NotebookManager):
                         print("MetaDATAAAAAA: {}".format(metadata))
                         last_modified = datetime.strptime(metadata[METADATA_LAST_MODIFIED],
                                 DATE_FORMAT)
+                        last_modified.replace(tzinfo=tzUTC())
                         print(last_modified)
                         info = dict(
                             checkpoint_id = metadata[METADATA_CHK_ID],

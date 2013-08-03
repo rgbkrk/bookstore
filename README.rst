@@ -10,8 +10,7 @@ Currently supports OpenStack Swift with Keystone authentication and Rackspace.
 *Add your provider with a pull request!*
 
 Bookstore currently has generic support for OpenStack Swift and simplified
-authentication for Rackspace's CloudFiles. Feel free to make a pull request if
-you want a notebook manager for your implementation.
+authentication for Rackspace's CloudFiles.
 
 Once installed and configured (added to an ipython profile), just launch
 IPython notebook like normal:
@@ -49,17 +48,23 @@ Configuration
 -------------
 
 Bookstore has to be added to an IPython profile and configured to work with
-your provider.
+your OpenStack provider.
 
 You can create a brand new notebook profile for bookstore:
 
 .. code-block:: bash
 
-    $ ipython profile create swifty_ipy
+    $ ipython profile create swiftstore
     [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_config.py'
     [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_notebook_config.py'
 
-Or just add it to your default configuration, which should be located at
+When launching, just set the custom profile you want to use
+
+.. code-block:: bash
+
+    $ ipython notebook --profile=swiftstore
+
+If you want to keep it simple, just add the configuration to your default configuration located at:
 
 .. code-block:: bash
 
@@ -94,8 +99,6 @@ sure it comes after the config declaration ``c = get_config()``.
     # Container on OpenStack Swift
     c.KeystoneNotebookManager.container_name = u'notebooks'
 
-You will of course need to set these options according to your implementation.
-
 On Rackspace's CloudFiles
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -115,9 +118,6 @@ sure it comes after the config declaration ``c = get_config()``.
 
     # Container on CloudFiles
     c.CloudFilesNotebookManager.container_name = u'notebooks'
-
-You'll need to replace ``USER_NAME`` and ``API_KEY`` with your actual username and
-api key of course. You can get the API key from the cloud control panel after logging in.
 
 Contributing
 ------------
