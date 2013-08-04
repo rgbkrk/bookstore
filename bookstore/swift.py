@@ -29,6 +29,10 @@ You can also use your default config, located at
 
 ~/.ipython/profile_default/ipython_notebook_config.py
 
+Notebooks are stored by uuid and checkpoints are stored relative to this uuid
+
+    {notebook_id}/checkpoints/{checkpoint_id}
+
 """
 
 #-----------------------------------------------------------------------------
@@ -87,7 +91,8 @@ class SwiftNotebookManager(NotebookManager):
         # Cached version of the mapping of notebook IDs to notebook names
         self.mapping = {}
 
-        objects = self.container.get_objects()
+        # Grab only top level notebooks
+        objects = self.container.get_objects(delimiter='/')
 
         for obj in objects:
             nb_id = obj.name
@@ -237,25 +242,25 @@ class SwiftNotebookManager(NotebookManager):
         self.log.debug("Listing checkpoints for notebook {}".format(
                         notebook_id))
         try:
-            objects = self.container.get_objects()
+            objects = self.container.get_objects(prefix=notebook_id,
+                    delimiter='/')
 
             chkpoints = []
             for obj in objects:
-                if(notebook_id in obj.name and "checkpoints" in obj.name):
-                    try:
-                        metadata = obj.get_metadata()
-                        last_modified = datetime.strptime(metadata[METADATA_LAST_MODIFIED],
-                                DATE_FORMAT)
-                        last_modified.replace(tzinfo=tzUTC())
-                        info = dict(
-                            checkpoint_id = metadata[METADATA_CHK_ID],
-                            last_modified = metadata[METADATA_LAST_MODIFIED],
-                        )
-                        chkpoints.append(info)
+                try:
+                    metadata = obj.get_metadata()
+                    last_modified = datetime.strptime(metadata[METADATA_LAST_MODIFIED],
+                            DATE_FORMAT)
+                    last_modified.replace(tzinfo=tzUTC())
+                    info = dict(
+                        checkpoint_id = metadata[METADATA_CHK_ID],
+                        last_modified = metadata[METADATA_LAST_MODIFIED],
+                    )
+                    chkpoints.append(info)
 
-                    except Exception as e:
-                        self.log.error("Unable to pull metadata")
-                        self.log.error("Exception: {}".format(e))
+                except Exception as e:
+                    self.log.error("Unable to pull metadata")
+                    self.log.error("Exception: {}".format(e))
 
         except Exception as e:
             raise web.HTTPError(400, "Unexpected error while listing checkpoints")
