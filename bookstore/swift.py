@@ -165,16 +165,18 @@ class SwiftNotebookManager(NotebookManager):
     def delete_notebook(self, notebook_id):
         '''
         Delete notebook by notebook_id.
+
+        Also deletes checkpoints for the notebook.
         '''
         if not self.notebook_exists(notebook_id):
             raise web.HTTPError(404, u'Notebook does not exist: %s' % notebook_id)
         try:
-            self.container.delete_object(notebook_id)
+            for obj in self.container.get_objects(prefix=notebook_id):
+                obj.delete()
         except Exception as e:
             raise web.HTTPError(400, u'Unexpected error while deleting notebook: %s' % e)
         else:
             self.delete_notebook_id(notebook_id)
-
 
     def get_checkpoint_path(self, notebook_id, checkpoint_id):
         '''
@@ -194,7 +196,7 @@ class SwiftNotebookManager(NotebookManager):
         last modification
         '''
 
-        self.log.debug("Creating checkpoint for notebook {}".format(
+        self.log.info("Creating checkpoint for notebook {}".format(
                         notebook_id))
 
         # We pull the next available checkpoint id (1UP)
@@ -210,7 +212,7 @@ class SwiftNotebookManager(NotebookManager):
             METADATA_NB_ID: notebook_id
         }
         try:
-            self.log.debug("Copying notebook {} to {}".format(
+            self.log.info("Copying notebook {} to {}".format(
                 notebook_id, checkpoint_path))
             self.cf.copy_object(container=self.container_name,
                        obj_name=notebook_id,
@@ -239,22 +241,26 @@ class SwiftNotebookManager(NotebookManager):
         '''
         # Going to have to re-think this later. This is just something to try
         # out for the moment
-        self.log.debug("Listing checkpoints for notebook {}".format(
+        self.log.info("Listing checkpoints for notebook {}".format(
                         notebook_id))
         try:
-            objects = self.container.get_objects(prefix=notebook_id,
-                    delimiter='/')
+            objects = self.container.get_objects(prefix=(notebook_id + "/"))
+
+            self.log.debug("Checkpoints = {}".format(objects))
 
             chkpoints = []
             for obj in objects:
                 try:
                     metadata = obj.get_metadata()
+                    self.log.debug("Object: {}".format(obj.name))
+                    self.log.debug("Metadata: {}".format(metadata))
+
                     last_modified = datetime.strptime(metadata[METADATA_LAST_MODIFIED],
                             DATE_FORMAT)
-                    last_modified.replace(tzinfo=tzUTC())
+                    last_modified = last_modified.replace(tzinfo=tzUTC())
                     info = dict(
                         checkpoint_id = metadata[METADATA_CHK_ID],
-                        last_modified = metadata[METADATA_LAST_MODIFIED],
+                        last_modified = last_modified,
                     )
                     chkpoints.append(info)
 
@@ -265,6 +271,8 @@ class SwiftNotebookManager(NotebookManager):
         except Exception as e:
             raise web.HTTPError(400, "Unexpected error while listing checkpoints")
 
+        self.log.debug("Checkpoints to list: {}".format(chkpoints))
+
         return chkpoints
 
     def restore_checkpoint(self, notebook_id, checkpoint_id):
@@ -274,7 +282,7 @@ class SwiftNotebookManager(NotebookManager):
         Actually overwrites the existing notebook
         '''
 
-        self.log.debug("Restoring checkpoint {} for notebook {}".format(
+        self.log.info("Restoring checkpoint {} for notebook {}".format(
                         checkpoint_id, notebook_id))
 
         if not self.notebook_exists(notebook_id):
@@ -295,7 +303,7 @@ class SwiftNotebookManager(NotebookManager):
         Delete a checkpoint for a notebook
         '''
 
-        self.log.debug("Deleting checkpoint {} for notebook {}".format(
+        self.log.info("Deleting checkpoint {} for notebook {}".format(
                         checkpoint_id, notebook_id))
 
         if not self.notebook_exists(notebook_id):
