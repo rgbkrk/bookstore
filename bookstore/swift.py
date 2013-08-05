@@ -200,7 +200,10 @@ class SwiftNotebookManager(NotebookManager):
                         notebook_id))
 
         # We pull the next available checkpoint id (1UP)
-        checkpoint_id = unicode(self.next_checkpoint.setdefault(notebook_id,0))
+        checkpoints = self.container.get_objects(prefix=(notebook_id + "/"))
+
+        checkpoint_id = unicode(self.next_checkpoint.setdefault(
+            notebook_id,len(checkpoints)))
 
         checkpoint_path = self.get_checkpoint_path(notebook_id, checkpoint_id)
 
