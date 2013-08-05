@@ -3,16 +3,14 @@ Bookstore
 
 Stores IPython notebooks automagically onto OpenStack clouds through Swift.
 
-**Note: Bookstore only works against IPython 1.0.0 alpha, but is ready for
-1.0's release.**
+**Note: Bookstore only works against IPython 1.0.0+**
 
 Currently supports OpenStack Swift with Keystone authentication and Rackspace.
 
 *Add your provider with a pull request!*
 
 Bookstore currently has generic support for OpenStack Swift and simplified
-authentication for Rackspace's CloudFiles. Feel free to make a pull request if
-you want a notebook manager for your implementation.
+authentication for Rackspace's CloudFiles.
 
 Once installed and configured (added to an ipython profile), just launch
 IPython notebook like normal:
@@ -29,7 +27,7 @@ IPython notebook like normal:
 Installation
 ------------
 
-This version requires IPython 1.0.0a1 and will pull the `alpha release tarball <http://archive.ipython.org/testing/1.0.0/ipython-1.0.0a1.tar.gz#egg=ipython-1.0.0a1>`_ as mentioned in the `notice to IPython-dev <http://mail.scipy.org/pipermail/ipython-dev/2013-July/011994.html>`_. You probably want to *install this to a virtualenv* or it will likely overwrite your current IPython installation. When the full release comes out, this should get a little easier to setup.
+This version requires IPython 1.0.0-rc1 or 1.0.0a1 and will pull the `release candidate 1 tarball <http://archive.ipython.org/testing/1.0.0/ipython-1.0.0-rc1.tar.gz#egg=ipython-1.0.0-rc1>`_ as mentioned in the `notice to IPython-dev <http://mail.scipy.org/pipermail/ipython-dev/2013-August/012058.html>`_. You probably want to *install this to a virtualenv* or it will likely overwrite your current IPython installation. When the full release comes out, this should get a little easier to setup.
 
 Simply:
 
@@ -50,17 +48,23 @@ Configuration
 -------------
 
 Bookstore has to be added to an IPython profile and configured to work with
-your provider.
+your OpenStack provider.
 
 You can create a brand new notebook profile for bookstore:
 
 .. code-block:: bash
 
-    $ ipython profile create swifty_ipy
+    $ ipython profile create swiftstore
     [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_config.py'
     [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_notebook_config.py'
 
-Or just add it to your default configuration, which should be located at
+When launching, just set the custom profile you want to use
+
+.. code-block:: bash
+
+    $ ipython notebook --profile=swiftstore
+
+If you want to keep it simple, just add the configuration to your default configuration located at:
 
 .. code-block:: bash
 
@@ -95,8 +99,6 @@ sure it comes after the config declaration ``c = get_config()``.
     # Container on OpenStack Swift
     c.KeystoneNotebookManager.container_name = u'notebooks'
 
-You will of course need to set these options according to your implementation.
-
 On Rackspace's CloudFiles
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -116,9 +118,6 @@ sure it comes after the config declaration ``c = get_config()``.
 
     # Container on CloudFiles
     c.CloudFilesNotebookManager.container_name = u'notebooks'
-
-You'll need to replace ``USER_NAME`` and ``API_KEY`` with your actual username and
-api key of course. You can get the API key from the cloud control panel after logging in.
 
 Contributing
 ------------

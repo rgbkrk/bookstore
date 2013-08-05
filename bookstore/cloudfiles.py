@@ -5,10 +5,17 @@
 """
 A notebook manager that uses Rackspace CloudFiles.
 
-bookstore requires IPython 1.0.0a or greater to work.
+Requires IPython 1.0.0+
 
-To use this with IPython, you'll need IPython notebook fully installed
-(ipython, tornado, pyzmq, and Jinja2) and a notebook profile.
+Add this to your ipython notebook profile (`ipython_notebook_config.py`):
+
+    c.NotebookApp.notebook_manager_class = 'bookstore.cloudfiles.CloudFilesNotebookManager'
+    c.CloudFilesNotebookManager.account_name = USER_NAME
+    c.CloudFilesNotebookManager.account_key = API_KEY
+    c.CloudFilesNotebookManager.container_name = u'notebooks'
+
+You'll need to replace `USER_NAME` and `API_KEY` with your actual username and
+api key of course. You can get the API key from the cloud control panel after logging in.
 
 It's easy to set up a notebook profile if you don't have one:
 
@@ -19,16 +26,6 @@ It's easy to set up a notebook profile if you don't have one:
 You can also use your default config, located at
 
 ~/.ipython/profile_default/ipython_notebook_config.py
-
-Now, add this to your ipython notebook profile (`ipython_notebook_config.py`):
-
-    c.NotebookApp.notebook_manager_class = 'bookstore.cloudfiles.CloudFilesNotebookManager'
-    c.CloudFilesNotebookManager.account_name = USER_NAME
-    c.CloudFilesNotebookManager.account_key = API_KEY
-    c.CloudFilesNotebookManager.container_name = u'notebooks'
-
-You'll need to replace `USER_NAME` and `API_KEY` with your actual username and
-api key of course. You can get the API key from the cloud control panel after logging in.
 
 """
 
