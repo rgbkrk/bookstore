@@ -18,7 +18,7 @@ def get_version():
     Version slurping without importing bookstore, since dependencies may not be
     met until setup is run.
     '''
-    version_regex = re.compile(r"__version__\s+=\s+['\"](\d+.\d+.\d+\w+)['\"]$")
+    version_regex = re.compile(r"__version__\s+=\s+['\"](\d+.\d+.\d+\w*)['\"]$")
     versions = filter(version_regex.match, open("bookstore/__init__.py"))
 
     if(len(versions) == 0):
