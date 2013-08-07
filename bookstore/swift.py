@@ -55,6 +55,8 @@ from IPython.nbformat import current
 from IPython.utils.traitlets import Unicode
 from IPython.utils.tz import utcnow, tzUTC
 
+import uuid
+
 from bookstore import __version__
 
 METADATA_NBNAME = 'x-object-meta-nbname'
@@ -78,9 +80,6 @@ class SwiftNotebookManager(NotebookManager):
     def __init__(self, **kwargs):
         super(SwiftNotebookManager, self).__init__(**kwargs)
         pyrax.set_setting("custom_user_agent", self.user_agent)
-
-        # A dictionary mapping notebook ids to lists of checkpoints
-        self.next_checkpoint = {}
 
     def load_notebook_names(self):
         """On startup load the notebook ids and names from OpenStack Swift.
@@ -186,6 +185,12 @@ class SwiftNotebookManager(NotebookManager):
         checkpoint_path = "{}/checkpoints/{}".format(notebook_id, checkpoint_id)
         return checkpoint_path
 
+    def new_checkpoint_id(self):
+        """
+        Generate a new checkpoint_id and store its mapping.
+        """
+        return unicode(uuid.uuid4())
+
     # Required Checkpoint methods
 
     def create_checkpoint(self, notebook_id):
@@ -202,8 +207,7 @@ class SwiftNotebookManager(NotebookManager):
         # We pull the next available checkpoint id (1UP)
         checkpoints = self.container.get_objects(prefix=(notebook_id + "/"))
 
-        checkpoint_id = unicode(self.next_checkpoint.setdefault(
-            notebook_id,len(checkpoints)))
+        checkpoint_id = self.new_checkpoint_id()
 
         checkpoint_path = self.get_checkpoint_path(notebook_id, checkpoint_id)
 
