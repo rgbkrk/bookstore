@@ -3,6 +3,9 @@ Bookstore
 
 Stores IPython notebooks automagically onto OpenStack clouds through Swift.
 
+.. image:: https://travis-ci.org/rgbkrk/bookstore.png?branch=master
+   :target: https://travis-ci.org/rgbkrk/bookstore
+
 **Note: Bookstore only works against IPython 1.0.0+**
 
 Currently supports OpenStack Swift with Keystone authentication and Rackspace.
