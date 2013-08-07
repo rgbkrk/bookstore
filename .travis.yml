@@ -5,5 +5,5 @@ python:
 
 install:
  - pip install -U setuptools
+ - pip install invoke==0.4.0 pytest==2.3.5
  - pip install .
-
