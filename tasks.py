@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import hexview
+import bookstore
 
 from invoke import run, task
 

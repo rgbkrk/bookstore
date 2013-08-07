@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Tests for hexview
+Tests for bookstore
 """
 
 import unittest
@@ -10,7 +10,7 @@ import doctest
 
 import bookstore
 
-class HexviewTestCase(unittest.TestCase):
+class BookstoreTestCase(unittest.TestCase):
     def setUp(self):
         pass
 
