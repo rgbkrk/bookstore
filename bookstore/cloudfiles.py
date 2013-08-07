@@ -69,10 +69,7 @@ class CloudFilesNotebookManager(SwiftNotebookManager):
         pyrax.set_credentials(username=self.account_name, api_key=self.account_key)
         self.cf = pyrax.cloudfiles
 
-        try:
-            self.container = self.cf.get_container(self.container_name)
-        except NoSuchContainer:
-            self.container = self.cf.create_container(self.container_name)
+        self.container = self.cf.create_container(self.container_name)
 
     def info_string(self):
         '''
