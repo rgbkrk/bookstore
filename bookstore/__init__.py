@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 # -*- coding: utf-8 -*-
-'''
+'''Bookstore
+
 Stores IPython notebooks automagically onto OpenStack clouds through Swift.
 '''
 
@@ -14,4 +15,3 @@ __copyright__ = 'Copyright 2013 Kyle Kelley'
 
 import swift
 import cloudfiles
-
