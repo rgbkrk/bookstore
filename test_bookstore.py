@@ -10,6 +10,7 @@ import doctest
 
 import bookstore
 
+
 class BookstoreTestCase(unittest.TestCase):
     def setUp(self):
         pass

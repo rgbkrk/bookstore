@@ -13,12 +13,14 @@ try:
 except ImportError:
     from distutils.core import setup
 
+
 def get_version():
     '''
     Version slurping without importing bookstore, since dependencies may not be
     met until setup is run.
     '''
-    version_regex = re.compile(r"__version__\s+=\s+['\"](\d+.\d+.\d+\w*)['\"]$")
+    version_regex = re.compile(r"__version__\s+=\s+"
+                               r"['\"](\d+.\d+.\d+\w*)['\"]$")
     versions = filter(version_regex.match, open("bookstore/__init__.py"))
 
     if(len(versions) == 0):
@@ -49,7 +51,7 @@ setup(name='bookstore',
       author='Kyle Kelley',
       author_email='rgbkrk@gmail.com',
       url='http://github.com/rgbkrk/bookstore',
-      packages = packages,
+      packages=packages,
       package_data={'': ['LICENSE']},
       include_package_data=False,
       install_requires=requires,
@@ -63,15 +65,14 @@ setup(name='bookstore',
       license=open('LICENSE').read(),
       zip_safe=False,
       classifiers=(
-        'Intended Audience :: Developers',
-        'Intended Audience :: Science/Research',
-        'Environment :: OpenStack',
-        'License :: OSI Approved :: Apache Software License',
-        'Natural Language :: English',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Topic :: System :: Distributed Computing',
+          'Intended Audience :: Developers',
+          'Intended Audience :: Science/Research',
+          'Environment :: OpenStack',
+          'License :: OSI Approved :: Apache Software License',
+          'Natural Language :: English',
+          'Programming Language :: Python',
+          'Programming Language :: Python :: 2.6',
+          'Programming Language :: Python :: 2.7',
+          'Topic :: System :: Distributed Computing',
       ),
 )
-

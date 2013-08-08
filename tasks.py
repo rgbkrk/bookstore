@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import bookstore
-
 from invoke import run, task
+
 
 @task
 def test():
