@@ -1,10 +1,13 @@
 Bookstore
 =========
 
-Stores IPython notebooks automagically onto OpenStack clouds through Swift.
+.. image:: https://badge.fury.io/py/bookstore.png
+   :target: http://badge.fury.io/py/bookstore
 
 .. image:: https://travis-ci.org/rgbkrk/bookstore.png?branch=master
    :target: https://travis-ci.org/rgbkrk/bookstore
+
+Stores IPython notebooks automagically onto OpenStack clouds through Swift.
 
 **Note: Bookstore only works against IPython 1.0.0+**
 
