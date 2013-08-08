@@ -65,6 +65,6 @@ class CloudFilesNotebookManager(SwiftNotebookManager):
         """Returns a status string about the Rackspace CloudFiles Notebook
         Manager
         """
-        info = '''Serving {}'s notebooks on Rackspace CloudFiles
-               from container {} in the {} region.'''
+        info = ("Serving {}'s notebooks on Rackspace CloudFiles from "
+                "container {} in the {} region.")
         return info.format(self.account_name, self.container_name, self.region)

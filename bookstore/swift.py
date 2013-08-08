@@ -308,8 +308,8 @@ class SwiftNotebookManager(NotebookManager):
             raise web.HTTPError(400, nb_delete_err_msg.format(e))
 
     def info_string(self):
-        info = '''Serving {}'s notebooks from OpenStack Swift
-               storage container: {}'''
+        info = ("Serving {}'s notebooks from OpenStack Swift "
+                "storage container: {}")
         return info.format(self.account_name, self.container_name)
 
 
