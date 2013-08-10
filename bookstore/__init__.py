@@ -7,7 +7,7 @@ Stores IPython notebooks automagically onto OpenStack clouds through Swift.
 '''
 
 __title__ = 'bookstore'
-__version__ = '0.1.0rc2'
+__version__ = '0.1.0'
 __build__ = 0x000100
 __author__ = 'Kyle Kelley'
 __license__ = 'Apache 2.0'
