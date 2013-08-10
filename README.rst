@@ -30,6 +30,8 @@ IPython notebook like normal:
     2013-08-01 13:44:25.400 [NotebookApp] The IPython Notebook is running at: http://127.0.0.1:9999/
     2013-08-01 13:44:25.400 [NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
 
+Bookstore can handle single checkpoints and is ready for IPython 1.0.x's multiple checkpoints (still to come in IPython).
+
 Installation
 ------------
 
