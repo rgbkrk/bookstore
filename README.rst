@@ -11,12 +11,12 @@ Stores IPython notebooks automagically onto OpenStack clouds through Swift.
 
 **Note: Bookstore only works against IPython 1.0.0+**
 
-Currently supports OpenStack Swift with Keystone authentication and Rackspace.
-
-*Add your provider with a pull request!*
+Bookstore supports the brand new checkpoint feature in IPython 1.0.
 
 Bookstore currently has generic support for OpenStack Swift and simplified
 authentication for Rackspace's CloudFiles.
+
+*Add your provider with a pull request!*
 
 Once installed and configured (added to an ipython profile), just launch
 IPython notebook like normal:
@@ -29,8 +29,6 @@ IPython notebook like normal:
     2013-08-01 13:44:25.400 [NotebookApp] Serving rgbkrk's notebooks on Rackspace CloudFiles from container: notebooks
     2013-08-01 13:44:25.400 [NotebookApp] The IPython Notebook is running at: http://127.0.0.1:9999/
     2013-08-01 13:44:25.400 [NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
-
-Bookstore can handle single checkpoints and is ready for IPython 1.0.x's multiple checkpoints (still to come in IPython).
 
 Installation
 ------------
