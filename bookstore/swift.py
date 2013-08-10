@@ -181,7 +181,7 @@ class SwiftNotebookManager(NotebookManager):
 
     def new_checkpoint_id(self):
         """Generate a new checkpoint_id and store its mapping."""
-        return uuid.uuid4()
+        return unicode(uuid.uuid4())
 
     # Required Checkpoint methods
 
