@@ -13,5 +13,5 @@ __author__ = 'Kyle Kelley'
 __license__ = 'Apache 2.0'
 __copyright__ = 'Copyright 2013 Kyle Kelley'
 
-import swift
-import cloudfiles
+from . import swift
+from . import cloudfiles

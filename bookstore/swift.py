@@ -13,8 +13,8 @@ filling in details for your OpenStack implementation.
     c.NotebookApp.notebook_manager_class = 'bookstore.swift.KeystoneNotebookManager'
     c.KeystoneNotebookManager.account_name = USER_NAME
     c.KeystoneNotebookManager.account_key = API_KEY
-    c.KeystoneNotebookManager.container_name = u'notebooks'
-    c.KeystoneNotebookManager.auth_endpoint = u'127.0.0.1:8021'
+    c.KeystoneNotebookManager.container_name = 'notebooks'
+    c.KeystoneNotebookManager.auth_endpoint = '127.0.0.1:8021'
     c.KeystoneNotebookManager.tenant_id = TENANT_ID
     c.KeystoneNotebookManager.tenant_name = TENANT_NAME
     c.KeystoneNotebookManager.region = 'RegionOne'
@@ -22,8 +22,8 @@ filling in details for your OpenStack implementation.
 It's easy to set up a notebook profile if you don't have one:
 
     $ ipython profile create swiftstore
-    [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_config.py'
-    [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_notebook_config.py'
+    [ProfileCreate] Generating default config file: '/Users/theuser/.ipython/profile_swiftstore/ipython_config.py'
+    [ProfileCreate] Generating default config file: '/Users/theuser/.ipython/profile_swiftstore/ipython_notebook_config.py'
 
 You can also use your default config, located at
 
@@ -59,10 +59,10 @@ METADATA_NB_ID = 'x-object-meta-notebook-id'
 
 DATE_FORMAT = "%X-%x"
 
-NB_DNEXIST_ERR = u'Notebook does not exist: {}'
-NB_SAVE_UNK_ERR = u'Unexpected error while saving notebook: {}'
-NB_DEL_UNK_ERR = u'Unexpected error while deleting notebook: {}'
-CHK_SAVE_UNK_ERR = u'Unexpected error while saving checkpoint: {}'
+NB_DNEXIST_ERR = 'Notebook does not exist: {}'
+NB_SAVE_UNK_ERR = 'Unexpected error while saving notebook: {}'
+NB_DEL_UNK_ERR = 'Unexpected error while deleting notebook: {}'
+CHK_SAVE_UNK_ERR = 'Unexpected error while saving checkpoint: {}'
 
 
 class SwiftNotebookManager(NotebookManager):
@@ -104,8 +104,8 @@ class SwiftNotebookManager(NotebookManager):
 
         This version uses `self.mapping` as the authoritative notebook list.
         """
-        data = [dict(notebook_id=nb_id, name=name) for nb_id, name in
-                self.mapping.items()]
+        data = [dict(notebook_id=nb_id, name=name)
+                for nb_id, name in list(self.mapping.items())]
         data = sorted(data, key=lambda item: item['name'])
         return data
 
@@ -119,11 +119,11 @@ class SwiftNotebookManager(NotebookManager):
             # Read in the entire notebook file into s
             s = obj.get()
         except:
-            raise web.HTTPError(500, u'Notebook cannot be read.')
+            raise web.HTTPError(500, 'Notebook cannot be read.')
         try:
-            nb = current.reads(s, u'json')
+            nb = current.reads(s, 'json')
         except:
-            raise web.HTTPError(500, u'Unreadable JSON notebook.')
+            raise web.HTTPError(500, 'Unreadable JSON notebook.')
 
         last_modified = utcnow()
         return last_modified, nb
@@ -134,7 +134,7 @@ class SwiftNotebookManager(NotebookManager):
         try:
             new_name = nb.metadata.name
         except AttributeError:
-            raise web.HTTPError(400, u'Missing notebook name')
+            raise web.HTTPError(400, 'Missing notebook name')
 
         if notebook_id is None:
             notebook_id = self.new_notebook_id(new_name)
@@ -143,7 +143,7 @@ class SwiftNotebookManager(NotebookManager):
             raise web.HTTPError(404, NB_DNEXIST_ERR.format(notebook_id))
 
         try:
-            data = current.writes(nb, u'json')
+            data = current.writes(nb, 'json')
         except Exception as e:
             raise web.HTTPError(400, NB_SAVE_UNK_ERR.format(e))
 
@@ -181,7 +181,7 @@ class SwiftNotebookManager(NotebookManager):
 
     def new_checkpoint_id(self):
         """Generate a new checkpoint_id and store its mapping."""
-        return unicode(uuid.uuid4())
+        return uuid.uuid4()
 
     # Required Checkpoint methods
 
@@ -288,7 +288,7 @@ class SwiftNotebookManager(NotebookManager):
                                 new_container=self.container_name,
                                 new_obj_name=notebook_id)
         except:
-            raise web.HTTPError(500, u'Checkpoint could not be restored.')
+            raise web.HTTPError(500, 'Checkpoint could not be restored.')
 
     def delete_checkpoint(self, notebook_id, checkpoint_id):
         """Delete a checkpoint for a notebook"""
@@ -304,7 +304,7 @@ class SwiftNotebookManager(NotebookManager):
         try:
             self.container.delete_object(checkpoint_path)
         except Exception as e:
-            nb_delete_err_msg = u'Unexpected error while deleting notebook: {}'
+            nb_delete_err_msg = 'Unexpected error while deleting notebook: {}'
             raise web.HTTPError(400, nb_delete_err_msg.format(e))
 
     def info_string(self):

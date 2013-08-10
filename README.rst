@@ -33,8 +33,6 @@ IPython notebook like normal:
 Installation
 ------------
 
-This version requires IPython 1.0.0-rc1 or 1.0.0a1 and will pull the `release candidate 1 tarball <http://archive.ipython.org/testing/1.0.0/ipython-1.0.0-rc1.tar.gz#egg=ipython-1.0.0-rc1>`_ as mentioned in the `notice to IPython-dev <http://mail.scipy.org/pipermail/ipython-dev/2013-August/012058.html>`_. You probably want to *install this to a virtualenv* or it will likely overwrite your current IPython installation. When the full release comes out, this should get a little easier to setup.
-
 Simply:
 
 .. code-block:: bash
@@ -129,5 +127,5 @@ Contributing
 ------------
 
 Send a pull request on `GitHub <http://www.github.com/rgbkrk/bookstore>`_. It's
-that simple.
+that simple. More than happy to respond to issues on GitHub as well.
 

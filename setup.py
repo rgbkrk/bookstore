@@ -6,12 +6,18 @@ import os
 import sys
 
 import re
-from itertools import ifilter
 
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
+
+# Backwards compatibility for Python 2.x
+try:
+    from itertools import ifilter
+    filter = ifilter
+except ImportError:
+    pass
 
 
 def get_version():
@@ -23,10 +29,12 @@ def get_version():
                                r"['\"](\d+.\d+.\d+\w*)['\"]$")
     versions = filter(version_regex.match, open("bookstore/__init__.py"))
 
-    if(len(versions) == 0):
+    try:
+        version = next(versions)
+    except StopIteration:
         raise Exception("Bookstore version not set")
 
-    return version_regex.match(versions[-1]).group(1)
+    return version_regex.match(version).group(1)
 
 version = get_version()
 
@@ -55,13 +63,6 @@ setup(name='bookstore',
       package_data={'': ['LICENSE']},
       include_package_data=False,
       install_requires=requires,
-      dependency_links=[
-          'https://1f2133dc3aab4203faba-815b705eb00655bf9ca363d7dfb3b606.ssl.cf2.rackcdn.com/ipython-1.0.0-rc1.tar.gz',
-          #'http://archive.ipython.org/testing/1.0.0/ipython-1.0.0-rc1.tar.gz#egg=ipython-1.0.0-rc1',
-          #'http://archive.ipython.org/testing/1.0.0/ipython-1.0.0-rc1.zip#egg=ipython-1.0.0-rc1',
-          #'http://pub.fict.io/ipython-1.0.0a1.tar.gz#egg=ipython-1.0.0-rc1',
-          #'http://pub.fict.io/ipython-1.0.0a1.zip#egg=ipython-1.0.0-rc1',
-      ],
       license=open('LICENSE').read(),
       zip_safe=False,
       classifiers=(

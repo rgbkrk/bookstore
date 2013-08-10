@@ -31,7 +31,7 @@ You can also use your default config, located at
 
 import pyrax
 from IPython.utils.traitlets import Unicode
-from swift import SwiftNotebookManager
+from .swift import SwiftNotebookManager
 from tornado import web
 
 
