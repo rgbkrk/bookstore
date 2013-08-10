@@ -51,8 +51,6 @@ with open('requirements.txt') as reqs:
     requires = reqs.read().splitlines()
 
 setup(name='bookstore',
-      # setup.py can't pull from bookstore.__version__ as the dependencies
-      # won't be installed yet
       version=version,
       description='IPython notebook storage on OpenStack Swift + Rackspace.',
       long_description=open('README.rst').read(),

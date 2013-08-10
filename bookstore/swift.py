@@ -213,7 +213,7 @@ class SwiftNotebookManager(NotebookManager):
             self.log.info("Copying notebook {} to {}".format(
                 notebook_id, checkpoint_path))
             self.cf.copy_object(container=self.container_name,
-                                obj_name=notebook_id,
+                                obj=notebook_id,
                                 new_container=self.container_name,
                                 new_obj_name=checkpoint_path)
 
