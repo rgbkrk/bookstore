@@ -288,7 +288,7 @@ class SwiftNotebookManager(NotebookManager):
 
         try:
             self.cf.copy_object(container=self.container_name,
-                                obj_name=checkpoint_path,
+                                obj=checkpoint_path,
                                 new_container=self.container_name,
                                 new_obj_name=notebook_id)
         except:
