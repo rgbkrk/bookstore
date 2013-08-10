@@ -181,7 +181,11 @@ class SwiftNotebookManager(NotebookManager):
 
     def new_checkpoint_id(self):
         """Generate a new checkpoint_id and store its mapping."""
-        return unicode(uuid.uuid4())
+        # Current release of IPython 1.0.0 does not handle multiple checkpoints
+        # so we'll generate non-unique uuid's (defeats the purpose now, but
+        # will be forwards compatible with
+        # >>> unicode(uuid.uuid4())
+        return unicode(uuid.UUID('00000000-0000-0000-0000-000000000000'))
 
     # Required Checkpoint methods
 
