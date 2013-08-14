@@ -53,7 +53,13 @@ Configuration
 Bookstore has to be added to an IPython profile and configured to work with
 your OpenStack provider.
 
-You can create a brand new notebook profile for bookstore:
+If you want to keep it simple, just add your configuration to the default configuration located at:
+
+.. code-block:: bash
+
+    ~/.ipython/profile_default/ipython_notebook_config.py
+
+Alternatively, you can create a brand new notebook profile for bookstore:
 
 .. code-block:: bash
 
@@ -66,12 +72,6 @@ When launching, just set the custom profile you want to use
 .. code-block:: bash
 
     $ ipython notebook --profile=swiftstore
-
-If you want to keep it simple, just add the configuration to your default configuration located at:
-
-.. code-block:: bash
-
-    ~/.ipython/profile_default/ipython_notebook_config.py
 
 Each provider has their own setup for authentication.
 
