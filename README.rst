@@ -42,7 +42,7 @@ Alternatively, you can always pull from the master branch if you're the adventur
 
 .. code-block:: bash
 
-    $ pip install -e git+https://github.com/rgbkrk/bookstore.git
+    $ pip install git+https://github.com/rgbkrk/bookstore.git
 
 Installation isn't the end though. You need to configure your account details
 as well as where you'll be storing the notebooks.
@@ -115,7 +115,7 @@ sure it comes after the config declaration ``c = get_config()``.
     # Setup IPython Notebook to write notebooks to CloudFiles
     c.NotebookApp.notebook_manager_class = 'bookstore.cloudfiles.CloudFilesNotebookManager'
 
-    # Set up your user name and password
+    # Set your user name and API Key
     c.CloudFilesNotebookManager.account_name = USER_NAME
     c.CloudFilesNotebookManager.account_key = API_KEY
 
