@@ -66,6 +66,7 @@ setup(name='bookstore',
       classifiers=(
           'Intended Audience :: Developers',
           'Intended Audience :: Science/Research',
+          'Framework :: IPython',
           'Environment :: OpenStack',
           'License :: OSI Approved :: Apache Software License',
           'Natural Language :: English',
