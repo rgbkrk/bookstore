@@ -181,11 +181,7 @@ class SwiftNotebookManager(NotebookManager):
 
     def new_checkpoint_id(self):
         """Generate a new checkpoint_id and store its mapping."""
-        # Current release of IPython 1.0.0 does not handle multiple checkpoints
-        # so we'll generate non-unique uuid's (defeats the purpose now, but
-        # will be forwards compatible with
-        # >>> unicode(uuid.uuid4())
-        return unicode(uuid.UUID('00000000-0000-0000-0000-000000000000'))
+        return unicode(uuid.uuid4())
 
     # Required Checkpoint methods
 
@@ -243,7 +239,7 @@ class SwiftNotebookManager(NotebookManager):
 
             self.log.debug("Checkpoints = {}".format(objects))
 
-            chkpoints = []
+            checkpoints = []
             for obj in objects:
                 try:
                     metadata = obj.get_metadata()
@@ -258,7 +254,7 @@ class SwiftNotebookManager(NotebookManager):
                         checkpoint_id=metadata[METADATA_CHK_ID],
                         last_modified=last_modified,
                     )
-                    chkpoints.append(info)
+                    checkpoints.append(info)
 
                 except Exception as e:
                     self.log.error("Unable to pull metadata")
@@ -268,9 +264,11 @@ class SwiftNotebookManager(NotebookManager):
             raise web.HTTPError(400, "Unexpected error while listing" +
                                      "checkpoints")
 
-        self.log.debug("Checkpoints to list: {}".format(chkpoints))
+        checkpoints = sorted(checkpoints, key=lambda item: item['last_modified'])
 
-        return chkpoints
+        self.log.debug("Checkpoints to list: {}".format(checkpoints))
+
+        return checkpoints
 
     def restore_checkpoint(self, notebook_id, checkpoint_id):
         """Restore a notebook from one of its checkpoints.
