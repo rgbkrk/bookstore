@@ -9,13 +9,15 @@ Bookstore
 
 Stores IPython notebooks automagically onto OpenStack clouds through Swift.
 
-**Note: Bookstore only works against IPython 1.0.0+**
+*Add your provider with a pull request!*
+
+**Note: Bookstore requires IPython 1.0+**
 
 Bookstore currently has generic support for OpenStack Swift and simplified
 authentication for Rackspace's CloudFiles. Bookstore also handles IPython notebook's
-autosave/checkpoint feature.
+autosave/checkpoint feature and as of the latest release supports multiple checkpoints:
 
-*Add your provider with a pull request!*
+![Multiple checkpoints](https://pbs.twimg.com/media/BVD3olXCMAA2rzb.png)
 
 Once installed and configured (added to an ipython profile), just launch
 IPython notebook like normal:

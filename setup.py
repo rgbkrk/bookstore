@@ -64,6 +64,7 @@ setup(name='bookstore',
       license=open('LICENSE').read(),
       zip_safe=False,
       classifiers=(
+          'Development Status :: 5 - Production/Stable',
           'Intended Audience :: Developers',
           'Intended Audience :: Science/Research',
           'Framework :: IPython',
