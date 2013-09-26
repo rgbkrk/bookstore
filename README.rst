@@ -17,7 +17,8 @@ Bookstore currently has generic support for OpenStack Swift and simplified
 authentication for Rackspace's CloudFiles. Bookstore also handles IPython notebook's
 autosave/checkpoint feature and as of the latest release supports multiple checkpoints:
 
-![Multiple checkpoints](https://pbs.twimg.com/media/BVD3olXCMAA2rzb.png)
+.. image:: https://pbs.twimg.com/media/BVD3olXCMAA2rzb.png
+   :alt: Multiple checkpoints
 
 Once installed and configured (added to an ipython profile), just launch
 IPython notebook like normal:
