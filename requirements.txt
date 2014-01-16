@@ -1,2 +1,3 @@
 pyrax>=1.4.10
+apache-libcloud>=0.13.3
 ipython[notebook]>=1.1.0

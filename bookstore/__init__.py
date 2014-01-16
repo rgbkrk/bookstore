@@ -15,3 +15,4 @@ __copyright__ = 'Copyright 2013 Kyle Kelley'
 
 from . import swift
 from . import cloudfiles
+from . import multicloud

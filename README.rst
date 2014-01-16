@@ -53,6 +53,31 @@ as well as where you'll be storing the notebooks.
 Configuration
 -------------
 
+Note on Mac OS X:
+
+libcloud (what bookstore is using under the hood), has trouble finding the Mac's CA Certs
+
+You'll need to set where your SSL_CERT_FILE is located
+
+.. code-block:: bash
+
+  $ export SSL_CERT_FILE=/usr/local/opt/curl-ca-bundle/share/ca-bundle.crt
+
+If it's not on your system already, you'll need toinstall the curl ca bundle, either directly or via brew:
+
+.. code-block:: bash
+
+  $ brew install curl-ca-bundle
+  ==> Downloading https://downloads.sourceforge.net/project/machomebrew/mirror/curl-ca-bundle-1.87.tar.bz2
+  ######################################################################## 100.0%
+  ==> Caveats
+  To use these certificates with OpenSSL:
+  
+    export SSL_CERT_FILE=/usr/local/opt/curl-ca-bundle/share/ca-bundle.crt
+    ==> Summary
+    🍺  /usr/local/Cellar/curl-ca-bundle/1.87: 2 files, 252K, built in 2 seconds
+
+
 Bookstore has to be added to an IPython profile and configured to work with
 your OpenStack provider.
 

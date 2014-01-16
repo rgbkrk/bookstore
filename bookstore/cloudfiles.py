@@ -31,11 +31,11 @@ You can also use your default config, located at
 
 import pyrax
 from IPython.utils.traitlets import Unicode
-from .swift import SwiftNotebookManager
+from .multicloud import LibcloudNotebookManager
 from tornado import web
 
 
-class CloudFilesNotebookManager(SwiftNotebookManager):
+class CloudFilesNotebookManager(LibcloudNotebookManager):
     """Manages IPython notebooks on Rackspace's Cloud.
 
     Rackspace is a known entity (configured OpenStack), so the setup is
@@ -45,21 +45,21 @@ class CloudFilesNotebookManager(SwiftNotebookManager):
     account_name = Unicode('', config=True, help='Rackspace username')
     account_key = Unicode('', config=True, help='Rackspace API Key')
     region = Unicode('DFW', config=True, help='Region')
-    identity_type = "rackspace"
 
     def __init__(self, **kwargs):
         """Sets up the NotebookManager using the credentials supplied from the
         IPython configuration.
         """
         super(CloudFilesNotebookManager, self).__init__(**kwargs)
-        pyrax.set_setting("identity_type", self.identity_type)
-        pyrax.set_setting("region", self.region)
 
-        pyrax.set_credentials(username=self.account_name,
-                              api_key=self.account_key)
-        self.cf = pyrax.cloudfiles
+        self.driver = get_driver(Provider.CLOUDFILES)
 
-        self.container = self.cf.create_container(self.container_name)
+        # TODO: Verify the region casing (Is it case sensitive?)
+        self.client = driver(self.account_name, self.account_key, self.region)
+
+        # TODO: The next steps should be handled in the parent class
+        self.client.connection.user_agent_append(self.user_agent)
+        self.container = self.client.get_container(self.container_name)
 
     def info_string(self):
         """Returns a status string about the Rackspace CloudFiles Notebook
