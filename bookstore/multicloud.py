@@ -108,25 +108,29 @@ class LibcloudNotebookManager(NotebookManager):
         data = sorted(data, key=lambda item: item['name'])
         return data
 
-    def read_notebook_object(self, notebook_id):
-        """Get the object representation of a notebook by notebook_id."""
-        if not self.notebook_exists(notebook_id):
-            raise web.HTTPError(404, NB_DNEXIST_ERR.format(notebook_id))
+    def _read_notebook_object(self, notebook_path):
         try:
             obj = self.container.get_object(notebook_id)
             obj_stream = obj.as_stream()
             s = "".join(list(obj_stream))
-
         except:
             raise web.HTTPError(500, 'Notebook cannot be read.')
+
         try:
             nb = current.reads(s, 'json')
         except:
             raise web.HTTPError(500, 'Unreadable JSON notebook.')
 
-        # TODO: Read *actual* last_modified
+        # TODO: Check if this really means the last_modified (only read here)
         last_modified = utcnow()
         return last_modified, nb
+
+    def read_notebook_object(self, notebook_id):
+        """Get the object representation of a notebook by notebook_id."""
+        if not self.notebook_exists(notebook_id):
+            raise web.HTTPError(404, NB_DNEXIST_ERR.format(notebook_id))
+
+        return self._read_notebook_object(notebook_id)
 
     def write_notebook_object(self, nb, notebook_id=None):
         """Save an existing notebook object by notebook_id."""
@@ -193,40 +197,61 @@ class LibcloudNotebookManager(NotebookManager):
 
     # Required Checkpoint methods
 
+    def _copy_notebook(self, notebook_path, new_notebook_path):
+        try:
+            self.log.info("Copying notebook {} to {}".format(
+                notebook_id, checkpoint_path))
+
+            last_modified, nb = self._read_notebook_object(notebook_id)
+
+            metadata = {
+                METADATA_CHK_ID: checkpoint_id,
+                METADATA_LAST_MODIFIED: last_modified.strftime(DATE_FORMAT),
+                METADATA_NB_ID: notebook_id
+            }
+
+            obj = self.container.store_object(iterator=iter(data),
+                                              object_name=checkpoint_path,
+                                              extra={'content_type':'application/json',
+                                                     'meta_data': metadata})    
+        except Exception as e:
+            raise web.HTTPError(400, CHK_SAVE_UNK_ERR.format(e))
+
+        return obj, last_modified
+
     def create_checkpoint(self, notebook_id):
         """Create a checkpoint of the current state of a notebook
 
         Returns a dictionary with a checkpoint_id and the timestamp from the
         last modification
+
+        Subclasses of providers that provide a copy object semantic should
+        override this class.
         """
 
         self.log.info("Creating checkpoint for notebook {}".format(
                       notebook_id))
 
-        # We pull the next available checkpoint id (1UP)
-        checkpoints = self.container.get_objects(prefix=(notebook_id + "/"))
-
         checkpoint_id = self.new_checkpoint_id()
 
         checkpoint_path = self.get_checkpoint_path(notebook_id, checkpoint_id)
 
-        last_modified = utcnow()
-
-        metadata = {
-            METADATA_CHK_ID: checkpoint_id,
-            METADATA_LAST_MODIFIED: last_modified.strftime(DATE_FORMAT),
-            METADATA_NB_ID: notebook_id
-        }
         try:
             self.log.info("Copying notebook {} to {}".format(
                 notebook_id, checkpoint_path))
-            self.cf.copy_object(container=self.container_name,
-                                obj=notebook_id,
-                                new_container=self.container_name,
-                                new_obj_name=checkpoint_path)
 
-            obj = self.container.get_object(checkpoint_path)
-            obj.set_metadata(metadata)
+            last_modified, nb = self.read_notebook_object(notebook_id)
+
+            metadata = {
+                METADATA_CHK_ID: checkpoint_id,
+                METADATA_LAST_MODIFIED: last_modified.strftime(DATE_FORMAT),
+                METADATA_NB_ID: notebook_id
+            }
+
+            obj = self.container.store_object(iterator=iter(data),
+                                              object_name=checkpoint_path,
+                                              extra={'content_type':'application/json',
+                                                     'meta_data': metadata})            
 
         except Exception as e:
             raise web.HTTPError(400, CHK_SAVE_UNK_ERR.format(e))
@@ -240,33 +265,33 @@ class LibcloudNotebookManager(NotebookManager):
         """Return a list of checkpoints for a given notebook"""
         # Going to have to re-think this later. This is just something to try
         # out for the moment
+
+        # Grab only checkpoints for this notebook
+        my_checkpoints = lambda obj: obj.startswith(notebook_id + "/")
+
+        object_iters = ifilter(my_checkpoints, container.iterate_objects())
         self.log.info("Listing checkpoints for notebook {}".format(
                       notebook_id))
+
+
         try:
-            objects = self.container.get_objects(prefix=(notebook_id + "/"))
-
-            self.log.debug("Checkpoints = {}".format(objects))
-
             checkpoints = []
-            for obj in objects:
-                try:
-                    metadata = obj.get_metadata()
-                    self.log.debug("Object: {}".format(obj.name))
-                    self.log.debug("Metadata: {}".format(metadata))
 
-                    last_modified = datetime.strptime(
-                        metadata[METADATA_LAST_MODIFIED],
-                        DATE_FORMAT)
-                    last_modified = last_modified.replace(tzinfo=tzUTC())
-                    info = dict(
-                        checkpoint_id=metadata[METADATA_CHK_ID],
-                        last_modified=last_modified,
-                    )
-                    checkpoints.append(info)
+            for obj in object_iters:
+                metadata = obj.meta_data
+                self.log.debug("Object: {}".format(obj.name))
+                self.log.debug("Metadata: {}".format(metadata))
 
-                except Exception as e:
-                    self.log.error("Unable to pull metadata")
-                    self.log.error("Exception: {}".format(e))
+                last_modified = datetime.strptime(
+                    metadata[METADATA_LAST_MODIFIED],
+                    DATE_FORMAT)
+
+                last_modified = last_modified.replace(tzinfo=tzUTC())
+                info = dict(
+                    checkpoint_id=metadata[METADATA_CHK_ID],
+                    last_modified=last_modified,
+                )
+                checkpoints.append(info)
 
         except Exception as e:
             raise web.HTTPError(400, "Unexpected error while listing" +
