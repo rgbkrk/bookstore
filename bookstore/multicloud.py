@@ -197,7 +197,7 @@ class LibcloudNotebookManager(NotebookManager):
 
     # Required Checkpoint methods
 
-    def _copy_notebook(self, notebook_path, new_notebook_path):
+    def _copy_notebook(self, notebook_path, new_notebook_path, checkpoint_id):
         try:
             self.log.info("Copying notebook {} to {}".format(
                 notebook_id, checkpoint_path))
@@ -236,22 +236,7 @@ class LibcloudNotebookManager(NotebookManager):
 
         checkpoint_path = self.get_checkpoint_path(notebook_id, checkpoint_id)
 
-        try:
-            self.log.info("Copying notebook {} to {}".format(
-                notebook_id, checkpoint_path))
-
-            last_modified, nb = self.read_notebook_object(notebook_id)
-
-            metadata = {
-                METADATA_CHK_ID: checkpoint_id,
-                METADATA_LAST_MODIFIED: last_modified.strftime(DATE_FORMAT),
-                METADATA_NB_ID: notebook_id
-            }
-
-            obj = self.container.store_object(iterator=iter(data),
-                                              object_name=checkpoint_path,
-                                              extra={'content_type':'application/json',
-                                                     'meta_data': metadata})            
+        self._copy_notebook(notebook_id, checkpoint_path, checkpoint_id)
 
         except Exception as e:
             raise web.HTTPError(400, CHK_SAVE_UNK_ERR.format(e))
@@ -263,9 +248,6 @@ class LibcloudNotebookManager(NotebookManager):
 
     def list_checkpoints(self, notebook_id):
         """Return a list of checkpoints for a given notebook"""
-        # Going to have to re-think this later. This is just something to try
-        # out for the moment
-
         # Grab only checkpoints for this notebook
         my_checkpoints = lambda obj: obj.startswith(notebook_id + "/")
 
