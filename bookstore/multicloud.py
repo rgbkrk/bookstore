@@ -110,7 +110,7 @@ class LibcloudNotebookManager(NotebookManager):
 
     def _read_notebook_object(self, notebook_path):
         try:
-            obj = self.container.get_object(notebook_id)
+            obj = self.container.get_object(notebook_path)
             obj_stream = obj.as_stream()
             s = "".join(list(obj_stream))
         except:
@@ -130,7 +130,7 @@ class LibcloudNotebookManager(NotebookManager):
         if not self.notebook_exists(notebook_id):
             raise web.HTTPError(404, NB_DNEXIST_ERR.format(notebook_id))
 
-        return self._read_notebook_object(notebook_id)
+        return self._read_notebook_object(notebook_path)
 
     def write_notebook_object(self, nb, notebook_id=None):
         """Save an existing notebook object by notebook_id."""
@@ -197,19 +197,16 @@ class LibcloudNotebookManager(NotebookManager):
 
     # Required Checkpoint methods
 
-    def _copy_notebook(self, notebook_path, new_notebook_path, checkpoint_id):
+    def _copy_notebook(self, notebook_path, new_notebook_path, metadata=None):
+        if metadata is None:
+            metadata = {}
+
         try:
             self.log.info("Copying notebook {} to {}".format(
-                notebook_id, checkpoint_path))
+                notebook_path, new_notebook_path, checkpoint_path))
 
-            last_modified, nb = self._read_notebook_object(notebook_id)
-
-            metadata = {
-                METADATA_CHK_ID: checkpoint_id,
-                METADATA_LAST_MODIFIED: last_modified.strftime(DATE_FORMAT),
-                METADATA_NB_ID: notebook_id
-            }
-
+            # A workaround until libcloud has copy semantics
+            last_modified, nb = self._read_notebook_object(notebook_path)
             obj = self.container.store_object(iterator=iter(data),
                                               object_name=checkpoint_path,
                                               extra={'content_type':'application/json',
@@ -236,7 +233,13 @@ class LibcloudNotebookManager(NotebookManager):
 
         checkpoint_path = self.get_checkpoint_path(notebook_id, checkpoint_id)
 
-        self._copy_notebook(notebook_id, checkpoint_path, checkpoint_id)
+        metadata = {
+            METADATA_CHK_ID: checkpoint_id,
+            METADATA_LAST_MODIFIED: last_modified.strftime(DATE_FORMAT),
+            METADATA_NB_ID: notebook_id
+        }
+
+        self._copy_notebook(notebook_id, checkpoint_path, metadata)
 
         except Exception as e:
             raise web.HTTPError(400, CHK_SAVE_UNK_ERR.format(e))
@@ -300,10 +303,7 @@ class LibcloudNotebookManager(NotebookManager):
         checkpoint_path = self.get_checkpoint_path(notebook_id, checkpoint_id)
 
         try:
-            self.cf.copy_object(container=self.container_name,
-                                obj=checkpoint_path,
-                                new_container=self.container_name,
-                                new_obj_name=notebook_id)
+            self._copy_notebook(checkpoint_path, notebook_id)
         except:
             raise web.HTTPError(500, 'Checkpoint could not be restored.')
 
@@ -325,47 +325,7 @@ class LibcloudNotebookManager(NotebookManager):
             raise web.HTTPError(400, nb_delete_err_msg.format(e))
 
     def info_string(self):
-        info = ("Serving {}'s notebooks from OpenStack Swift "
+        info = ("Serving notebooks from "
                 "storage container: {}")
-        return info.format(self.account_name, self.container_name)
+        return info.format(self.container_name)
 
-
-class KeystoneNotebookManager(SwiftNotebookManager):
-    """Manages IPython notebooks on OpenStack Swift, using Keystone
-    authentication.
-
-    Extend this class with the defaults for your OpenStack provider to make
-    configuration for clients easier.
-    """
-    account_name = Unicode('', config=True, help='OpenStack account name.')
-    account_key = Unicode('', config=True, help='OpenStack account key.')
-    auth_endpoint = Unicode('', config=True, help='Authentication endpoint.')
-
-    region = Unicode('RegionOne', config=True,
-                     help='Region (e.g. RegionOne, ORD, LON)')
-
-    tenant_id = Unicode('', config=True,
-                        help='The tenant ID used for authentication')
-    tenant_name = Unicode('', config=True,
-                          help='The tenant name used for authentication')
-
-    identity_type = 'keystone'
-
-    def __init__(self, **kwargs):
-        super(SwiftNotebookManager, self).__init__(**kwargs)
-        pyrax.set_setting("identity_type", self.identity_type)
-        pyrax.set_setting("auth_endpoint", self.auth_endpoint)
-        pyrax.set_setting("region", self.region)
-        pyrax.set_setting("tenant_id", self.tenant_id)
-        pyrax.set_setting("tenant_name", self.tenant_name)
-
-        # Set creds and authenticate
-        pyrax.set_credentials(username=self.account_name,
-                              api_key=self.account_key)
-
-        self.cf = pyrax.cloudfiles
-
-        try:
-            self.container = self.cf.get_container(self.container_name)
-        except NoSuchContainer:
-            self.container = self.cf.create_container(self.container_name)
