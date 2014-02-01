@@ -197,7 +197,8 @@ class LibcloudNotebookManager(NotebookManager):
 
     # Required Checkpoint methods
 
-    def _copy_notebook(self, notebook_path, new_notebook_path, metadata=None):
+    def _copy_notebook(self, notebook_path, new_notebook_path,
+                       metadata=None):
         if metadata is None:
             metadata = {}
 
@@ -207,14 +208,26 @@ class LibcloudNotebookManager(NotebookManager):
 
             # A workaround until libcloud has copy semantics
             last_modified, nb = self._read_notebook_object(notebook_path)
+
+            try:
+                name = nb.metadata.name
+            except AttributeError:
+                raise web.HTTPError(400, 'Missing notebook name')
+
+            meta = {METADATA_NBNAME: name,
+                    METADATA_LAST_MODIFIED: last_modified.strftime(DATE_FORMAT)}
+
+            metadata.update(meta)
+
             obj = self.container.store_object(iterator=iter(data),
                                               object_name=checkpoint_path,
                                               extra={'content_type':'application/json',
                                                      'meta_data': metadata})    
+
         except Exception as e:
             raise web.HTTPError(400, CHK_SAVE_UNK_ERR.format(e))
 
-        return obj, last_modified
+        return last_modified, name
 
     def create_checkpoint(self, notebook_id):
         """Create a checkpoint of the current state of a notebook
@@ -235,11 +248,11 @@ class LibcloudNotebookManager(NotebookManager):
 
         metadata = {
             METADATA_CHK_ID: checkpoint_id,
-            METADATA_LAST_MODIFIED: last_modified.strftime(DATE_FORMAT),
             METADATA_NB_ID: notebook_id
         }
 
-        self._copy_notebook(notebook_id, checkpoint_path, metadata)
+        last_modified, _ = self._copy_notebook(notebook_id,
+                                               checkpoint_path, metadata)
 
         except Exception as e:
             raise web.HTTPError(400, CHK_SAVE_UNK_ERR.format(e))
@@ -303,7 +316,8 @@ class LibcloudNotebookManager(NotebookManager):
         checkpoint_path = self.get_checkpoint_path(notebook_id, checkpoint_id)
 
         try:
-            self._copy_notebook(checkpoint_path, notebook_id)
+            _, name = self._copy_notebook(checkpoint_path, notebook_id)
+            self.mapping[notebook_id] = name
         except:
             raise web.HTTPError(500, 'Checkpoint could not be restored.')
 
@@ -328,4 +342,3 @@ class LibcloudNotebookManager(NotebookManager):
         info = ("Serving notebooks from "
                 "storage container: {}")
         return info.format(self.container_name)
-
