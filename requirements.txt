@@ -1,2 +1,4 @@
-pyrax>=1.4.10
-ipython[notebook]>=1.1.0
+six
+python-dateutil>=2.2
+python-swiftclient>=2.0.3
+ipython[notebook]>=2.0.0

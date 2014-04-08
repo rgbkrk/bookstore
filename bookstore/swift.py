@@ -2,43 +2,13 @@
 
 # -*- coding: utf-8 -*-
 
-"""
-A notebook manager that uses OpenStack Swift object storage.
-
-Requires IPython 1.0.0+
-
-Add this to your ipython notebook profile (`ipython_notebook_config.py`),
-filling in details for your OpenStack implementation.
-
-    c.NotebookApp.notebook_manager_class = 'bookstore.swift.KeystoneNotebookManager'
-    c.KeystoneNotebookManager.account_name = USER_NAME
-    c.KeystoneNotebookManager.account_key = API_KEY
-    c.KeystoneNotebookManager.container_name = 'notebooks'
-    c.KeystoneNotebookManager.auth_endpoint = '127.0.0.1:8021'
-    c.KeystoneNotebookManager.tenant_id = TENANT_ID
-    c.KeystoneNotebookManager.tenant_name = TENANT_NAME
-    c.KeystoneNotebookManager.region = 'RegionOne'
-
-It's easy to set up a notebook profile if you don't have one:
-
-    $ ipython profile create swiftstore
-    [ProfileCreate] Generating default config file: '/Users/theuser/.ipython/profile_swiftstore/ipython_config.py'
-    [ProfileCreate] Generating default config file: '/Users/theuser/.ipython/profile_swiftstore/ipython_notebook_config.py'
-
-You can also use your default config, located at
-
-~/.ipython/profile_default/ipython_notebook_config.py
-
-Notebooks are stored by uuid and checkpoints are stored relative to this uuid
-
-    {notebook_id}/checkpoints/{checkpoint_id}
-
-"""
-
 from datetime import datetime
+import dateutil.parser
 
-import pyrax
-from pyrax.exceptions import NoSuchContainer
+import os.path
+from six import BytesIO
+
+import swiftclient
 
 from tornado import web
 
@@ -52,305 +22,250 @@ import uuid
 
 from bookstore import __version__
 
-METADATA_NBNAME = 'x-object-meta-nbname'
-METADATA_CHK_ID = 'x-object-meta-checkpoint-id'
-METADATA_LAST_MODIFIED = 'x-object-meta-nb-last-modified'
-METADATA_NB_ID = 'x-object-meta-notebook-id'
-
-DATE_FORMAT = "%X-%x"
-
-NB_DNEXIST_ERR = 'Notebook does not exist: {}'
-NB_SAVE_UNK_ERR = 'Unexpected error while saving notebook: {}'
-NB_DEL_UNK_ERR = 'Unexpected error while deleting notebook: {}'
-CHK_SAVE_UNK_ERR = 'Unexpected error while saving checkpoint: {}'
-
-
 class SwiftNotebookManager(NotebookManager):
     """This is a base class to be subclassed by OpenStack providers. The swift
     object storage should work across implementations, only authentication
     should differ.
     """
 
-    user_agent = "bookstore v{version}".format(version=__version__)
-    container_name = Unicode('notebooks', config=True,
-                             help='Container name for notebooks.')
+    container = Unicode('notebooks', config=True,
+                        help='Container name for notebooks.')
+
+    notebook_dir = Unicode(u"", config=True)
 
     def __init__(self, **kwargs):
         super(SwiftNotebookManager, self).__init__(**kwargs)
-        pyrax.set_setting("custom_user_agent", self.user_agent)
 
-    def load_notebook_names(self):
-        """On startup load the notebook ids and names from OpenStack Swift.
+    def path_exists(self, path):
+        self.log.info("list_dirs('{}')".format(path))
+        return True
 
-        The object names are the notebook ids and the notebook names are stored
-        as object metadata.
-        """
-        # Cached version of the mapping of notebook IDs to notebook names
-        self.mapping = {}
+    def is_hidden(self, path):
+        self.log.info("is_hidden('{}')".format(path))
+        return False
 
-        # Grab only top level notebooks
-        objects = self.container.get_objects(delimiter='/')
+    def notebook_exists(self, name, path=''):
+        """Returns a True if the notebook exists. Else, returns False."""
+        self.log.info("notebook_exists('{}','{}')".format(name, path))
 
-        for obj in objects:
-            nb_id = obj.name
-            metadata = obj.get_metadata()
-
-            if(METADATA_NBNAME in metadata):
-                name = metadata[METADATA_NBNAME]
-                self.mapping[nb_id] = name
-
-    def list_notebooks(self):
-        """List all notebooks in the container.
-
-        This version uses `self.mapping` as the authoritative notebook list.
-        """
-        data = [dict(notebook_id=nb_id, name=name)
-                for nb_id, name in list(self.mapping.items())]
-        data = sorted(data, key=lambda item: item['name'])
-        return data
-
-    def read_notebook_object(self, notebook_id):
-        """Get the object representation of a notebook by notebook_id."""
-        if not self.notebook_exists(notebook_id):
-            raise web.HTTPError(404, NB_DNEXIST_ERR.format(notebook_id))
+        full_path = os.path.join(path, name)
         try:
-            obj = self.container.get_object(notebook_id)
-
-            # Read in the entire notebook file into s
-            s = obj.get()
+            hdrs = self.connection.head_object(self.container, full_path)
+            return True
         except:
-            raise web.HTTPError(500, 'Notebook cannot be read.')
-        try:
-            nb = current.reads(s, 'json')
-        except:
-            raise web.HTTPError(500, 'Unreadable JSON notebook.')
+            return False
 
-        last_modified = utcnow()
-        return last_modified, nb
+    # The method list_dirs is called by the server to identify
+    # the subdirectories in a given path.
+    def list_dirs(self, path):
+        """List the directory models for a given API style path."""
+        self.log.info("list_dirs('{}')".format(path))
+        return []
 
-    def write_notebook_object(self, nb, notebook_id=None):
-        """Save an existing notebook object by notebook_id."""
+    def list_notebooks(self, path=''):
+        """Return a list of notebook dicts without content."""
+        self.log.info("list_notebooks('{}')".format(path))
 
-        try:
-            new_name = nb.metadata.name
-        except AttributeError:
-            raise web.HTTPError(400, 'Missing notebook name')
+        if path != '' and not path.endswith('/'):
+            path = path + '/'
+        _, conts = self.connection.get_container(
+            self.container, prefix=path, delimiter='/')
 
-        if notebook_id is None:
-            notebook_id = self.new_notebook_id(new_name)
+        notebooks = [{
+            'name': os.path.basename(obj['name']),
+            'path': obj['name'],
+            'last_modified': dateutil.parser.parse(obj['last_modified']),
+            'created': dateutil.parser.parse(obj['last_modified']),
+            'type': 'notebook'}
+            for obj in conts if 'name' in obj]
 
-        if notebook_id not in self.mapping:
-            raise web.HTTPError(404, NB_DNEXIST_ERR.format(notebook_id))
+        notebooks = sorted(notebooks, key=lambda item: item['name'])
+        return notebooks
 
-        try:
-            data = current.writes(nb, 'json')
-        except Exception as e:
-            raise web.HTTPError(400, NB_SAVE_UNK_ERR.format(e))
+    def get_notebook(self, name, path='', content=True):
+        """Get the notebook model with or without content."""
+        self.log.info(
+            "get_notebook('{}','{}','{}')".format(name, path, content))
 
-        metadata = {METADATA_NBNAME: new_name}
-        try:
-            obj = self.container.store_object(notebook_id, data)
-            obj.set_metadata(metadata)
-        except Exception as e:
-            raise web.HTTPError(400, NB_SAVE_UNK_ERR.format(e))
-
-        self.mapping[notebook_id] = new_name
-        return notebook_id
-
-    def delete_notebook(self, notebook_id):
-        """Delete notebook by notebook_id.
-
-        Also deletes checkpoints for the notebook.
-        """
-        if not self.notebook_exists(notebook_id):
-            raise web.HTTPError(404, NB_DNEXIST_ERR.format(notebook_id))
-        try:
-            for obj in self.container.get_objects(prefix=notebook_id):
-                obj.delete()
-        except Exception as e:
-            raise web.HTTPError(400, NB_DEL_UNK_ERR.format(e))
+        full_path = os.path.join(path, name)
+        if content:
+            hdrs, conts = self.connection.get_object(self.container, full_path)
+            model = {
+                'name': name,
+                'path': path,
+                'last_modified': dateutil.parser.parse(hdrs['last-modified']),
+                'created': dateutil.parser.parse(hdrs['last-modified']),
+                'type': 'notebook',
+                'content': current.reads(conts, 'json')
+            }
+            return model
         else:
-            self.delete_notebook_id(notebook_id)
+            hdrs = self.connection.head_object(self.container, full_path)
+            model = {
+                'name': name,
+                'path': path,
+                'last_modified': dateutil.parser.parse(hdrs['last-modified']),
+                'created': dateutil.parser.parse(hdrs['last-modified']),
+                'type': 'notebook',
+            }
+            return model
 
-    def get_checkpoint_path(self, notebook_id, checkpoint_id):
-        """Returns the canonical checkpoint path based on the notebook_id and
-        checkpoint_id
-        """
-        checkpoint_path_format = "{}/checkpoints/{}"
-        return checkpoint_path_format.format(notebook_id, checkpoint_id)
+    def save_notebook(self, model, name='', path=''):
+        """Save the notebook model and return the model with no content."""
+        self.log.info(
+            "save_notebook('{}','{}','{}')".format(model, name, path))
 
-    def new_checkpoint_id(self):
-        """Generate a new checkpoint_id and store its mapping."""
-        return unicode(uuid.uuid4())
+        path = path.strip('/')
 
-    # Required Checkpoint methods
+        if 'content' not in model:
+            raise web.HTTPError(400, u'No notebook JSON data provided')
 
-    def create_checkpoint(self, notebook_id):
-        """Create a checkpoint of the current state of a notebook
+        # One checkpoint should always exist
+        if self.notebook_exists(name, path) and not self.list_checkpoints(name, path):
+            self.create_checkpoint(name, path)
 
-        Returns a dictionary with a checkpoint_id and the timestamp from the
-        last modification
-        """
+        new_path = model.get('path', path).strip('/')
+        new_name = model.get('name', name)
+        full_path = os.path.join(new_path, new_name)
 
-        self.log.info("Creating checkpoint for notebook {}".format(
-                      notebook_id))
+        if path != new_path or name != new_name:
+            self.rename_notebook(name, path, new_name, new_path)
 
-        # We pull the next available checkpoint id (1UP)
-        checkpoints = self.container.get_objects(prefix=(notebook_id + "/"))
+        nb = current.to_notebook_json(model['content'])
+        self.check_and_sign(nb, new_name, new_path)
+        if 'name' in nb['metadata']:
+            nb['metadata']['name'] = u''
 
-        checkpoint_id = self.new_checkpoint_id()
+        ipynb_stream = BytesIO()
+        current.write(nb, ipynb_stream, u'json')
+        self.connection.put_object(
+            self.container, full_path, ipynb_stream.getvalue(), content_type='application/json')
+        ipynb_stream.close()
 
-        checkpoint_path = self.get_checkpoint_path(notebook_id, checkpoint_id)
+        # Return model
+        model = self.get_notebook(new_name, new_path, content=False)
+        return model
+
+    def update_notebook(self, model, name, path=''):
+        """Update the notebook's path and/or name"""
+        self.log.info(
+            "update_notebook('{}','{}','{}')".format(model, name, path))
+
+        path = path.strip('/')
+        new_name = model.get('name', name)
+        new_path = model.get('path', path).strip('/')
+        if path != new_path or name != new_name:
+            self._rename_notebook(name, path, new_name, new_path)
+        model = self.get_notebook(new_name, new_path, content=False)
+        return model
+
+    def delete_notebook(self, name, path=''):
+        """Delete notebook by name and path."""
+        self.log.info("delete_notebook('{}','{}')".format(name, path))
+
+        full_path = os.path.join(path, name)
+        hdrs, conts = self.connection.get_container(
+            self.container, prefix=full_path + '/', delimiter='/')
+        for obj in conts:
+            self.connection.delete_object(self.container, obj['name'])
+        self.connection.delete_object(self.container, full_path)
+
+    def _rename_notebook(self, old_name, old_path, new_name, new_path):
+        """Rename a notebook."""
+        self.log.info("_rename_notebook('{}','{}','{}','{}')".format(
+            old_name, old_path, new_name, new_path))
+
+        old_path = old_path.strip('/')
+        new_path = new_path.strip('/')
+        if new_name == old_name and new_path == old_path:
+            return
+
+        new_path = os.path.join(new_path, new_name)
+        old_path = os.path.join(old_path, old_name)
+
+        # Should we proceed with the move?
+        if self.notebook_exists(new_name, new_path):
+            raise web.HTTPError(
+                409, u'Notebook with name already exists: %s' % new_path)
+        self.log.info("TODO in rename_notebook() I am ignoring save_script")
+
+        # Move the checkpoints
+        hdrs, conts = self.connection.get_container(
+            self.container, prefix=old_path + '/', delimiter='/')
+        for obj in conts:
+            old_checkpoint_path = obj['name']
+            new_checkpoint_path = old_checkpoint_path.replace(
+                old_path, new_path)
+            self.connection.put_object(self.container, new_checkpoint_path,
+                                       contents=None,
+                                       headers={'X-Copy-From': '/%s/%s' % (self.container, old_checkpoint_path)})
+            self.connection.delete_object(self.container, old_checkpoint_path)
+
+        # Move the notebook file
+        self.connection.put_object(self.container, new_path,
+                                   contents=None,
+                                   headers={'X-Copy-From': '/%s/%s' % (self.container, old_path)})
+        self.connection.delete_object(self.container, old_path)
+
+    def create_checkpoint(self, name, path=''):
+        """Create a checkpoint of the current state of a notebook"""
+        self.log.info("create_checkpoint('{}','{}')".format(name, path))
+
+        checkpoint_id = unicode(uuid.uuid4())
+
+        full_path = os.path.join(path, name)
+        checkpoint_path = os.path.join(path, name, checkpoint_id)
+
+        self.connection.put_object(self.container, checkpoint_path,
+                                   contents=None,
+                                   headers={'X-Copy-From': '/%s/%s' % (self.container, full_path)})
 
         last_modified = utcnow()
+        return {'id': checkpoint_id, 'last_modified': last_modified}
 
-        metadata = {
-            METADATA_CHK_ID: checkpoint_id,
-            METADATA_LAST_MODIFIED: last_modified.strftime(DATE_FORMAT),
-            METADATA_NB_ID: notebook_id
-        }
-        try:
-            self.log.info("Copying notebook {} to {}".format(
-                notebook_id, checkpoint_path))
-            self.cf.copy_object(container=self.container_name,
-                                obj=notebook_id,
-                                new_container=self.container_name,
-                                new_obj_name=checkpoint_path)
-
-            obj = self.container.get_object(checkpoint_path)
-            obj.set_metadata(metadata)
-
-        except Exception as e:
-            raise web.HTTPError(400, CHK_SAVE_UNK_ERR.format(e))
-
-        info = dict(checkpoint_id=checkpoint_id,
-                    last_modified=last_modified)
-
-        return info
-
-    def list_checkpoints(self, notebook_id):
+    def list_checkpoints(self, name, path=''):
         """Return a list of checkpoints for a given notebook"""
-        # Going to have to re-think this later. This is just something to try
-        # out for the moment
-        self.log.info("Listing checkpoints for notebook {}".format(
-                      notebook_id))
-        try:
-            objects = self.container.get_objects(prefix=(notebook_id + "/"))
+        self.log.info("list_checkpoints('{}','{}')".format(name, path))
 
-            self.log.debug("Checkpoints = {}".format(objects))
+        full_path = os.path.join(path, name)
+        hdrs, data = self.connection.get_container(self.container,
+                                                   prefix=full_path + '/', delimiter='/')
 
-            checkpoints = []
-            for obj in objects:
-                try:
-                    metadata = obj.get_metadata()
-                    self.log.debug("Object: {}".format(obj.name))
-                    self.log.debug("Metadata: {}".format(metadata))
+        checkpoints = [{
+            'id': os.path.basename(obj['name']),
+            'last_modified': dateutil.parser.parse(obj['last_modified'])
+        } for obj in data]
 
-                    last_modified = datetime.strptime(
-                        metadata[METADATA_LAST_MODIFIED],
-                        DATE_FORMAT)
-                    last_modified = last_modified.replace(tzinfo=tzUTC())
-                    info = dict(
-                        checkpoint_id=metadata[METADATA_CHK_ID],
-                        last_modified=last_modified,
-                    )
-                    checkpoints.append(info)
-
-                except Exception as e:
-                    self.log.error("Unable to pull metadata")
-                    self.log.error("Exception: {}".format(e))
-
-        except Exception as e:
-            raise web.HTTPError(400, "Unexpected error while listing" +
-                                     "checkpoints")
-
-        checkpoints = sorted(checkpoints, key=lambda item: item['last_modified'])
-
-        self.log.debug("Checkpoints to list: {}".format(checkpoints))
-
+        checkpoints = sorted(
+            checkpoints, key=lambda item: item['last_modified'])
+        self.log.info("Checkpoints to list: {}".format(checkpoints))
         return checkpoints
 
-    def restore_checkpoint(self, notebook_id, checkpoint_id):
-        """Restore a notebook from one of its checkpoints.
+    def restore_checkpoint(self, checkpoint_id, name, path=''):
+        """Restore a notebook from one of its checkpoints"""
+        self.log.info(
+            "restore_checkpoint('{}','{}','{}')".format(checkpoint_id, name, path))
 
-        Actually overwrites the existing notebook
-        """
+        assert name.endswith(self.filename_ext)
+        assert self.notebook_exists(name, path)
 
-        self.log.info("Restoring checkpoint {} for notebook {}".format(
-                      checkpoint_id, notebook_id))
+        full_path = os.path.join(path, name)
+        checkpoint_path = os.path.join(path, name, checkpoint_id)
 
-        if not self.notebook_exists(notebook_id):
-            raise web.HTTPError(404, NB_DNEXIST_ERR.format(notebook_id))
-
-        checkpoint_path = self.get_checkpoint_path(notebook_id, checkpoint_id)
-
-        try:
-            self.cf.copy_object(container=self.container_name,
-                                obj=checkpoint_path,
-                                new_container=self.container_name,
-                                new_obj_name=notebook_id)
-        except:
-            raise web.HTTPError(500, 'Checkpoint could not be restored.')
+        self.connection.put_object(self.container, full_path,
+                                   contents=None,
+                                   headers={'X-Copy-From': '/%s/%s' % (self.container, checkpoint_path)})
 
     def delete_checkpoint(self, notebook_id, checkpoint_id):
         """Delete a checkpoint for a notebook"""
+        self.log.info(
+            "delete_checkpoint('{}','{}')".format(notebook_id, checkpoint_id))
 
-        self.log.info("Deleting checkpoint {} for notebook {}".format(
-                      checkpoint_id, notebook_id))
-
-        if not self.notebook_exists(notebook_id):
-            raise web.HTTPError(404, NB_DNEXIST_ERR.format(notebook_id))
-
-        checkpoint_path = self.get_checkpoint_path(notebook_id, checkpoint_id)
-
-        try:
-            self.container.delete_object(checkpoint_path)
-        except Exception as e:
-            nb_delete_err_msg = 'Unexpected error while deleting notebook: {}'
-            raise web.HTTPError(400, nb_delete_err_msg.format(e))
+        checkpoint_path = os.path.join(path, name, checkpoint_id)
+        self.connection.delete_object(self.container, checkpoint_path)
 
     def info_string(self):
         info = ("Serving {}'s notebooks from OpenStack Swift "
                 "storage container: {}")
-        return info.format(self.account_name, self.container_name)
+        return info.format(self.account_name, self.container)
 
-
-class KeystoneNotebookManager(SwiftNotebookManager):
-    """Manages IPython notebooks on OpenStack Swift, using Keystone
-    authentication.
-
-    Extend this class with the defaults for your OpenStack provider to make
-    configuration for clients easier.
-    """
-    account_name = Unicode('', config=True, help='OpenStack account name.')
-    account_key = Unicode('', config=True, help='OpenStack account key.')
-    auth_endpoint = Unicode('', config=True, help='Authentication endpoint.')
-
-    region = Unicode('RegionOne', config=True,
-                     help='Region (e.g. RegionOne, ORD, LON)')
-
-    tenant_id = Unicode('', config=True,
-                        help='The tenant ID used for authentication')
-    tenant_name = Unicode('', config=True,
-                          help='The tenant name used for authentication')
-
-    identity_type = 'keystone'
-
-    def __init__(self, **kwargs):
-        super(SwiftNotebookManager, self).__init__(**kwargs)
-        pyrax.set_setting("identity_type", self.identity_type)
-        pyrax.set_setting("auth_endpoint", self.auth_endpoint)
-        pyrax.set_setting("region", self.region)
-        pyrax.set_setting("tenant_id", self.tenant_id)
-        pyrax.set_setting("tenant_name", self.tenant_name)
-
-        # Set creds and authenticate
-        pyrax.set_credentials(username=self.account_name,
-                              api_key=self.account_key)
-
-        self.cf = pyrax.cloudfiles
-
-        try:
-            self.container = self.cf.get_container(self.container_name)
-        except NoSuchContainer:
-            self.container = self.cf.create_container(self.container_name)
