@@ -2,13 +2,10 @@
 
 # -*- coding: utf-8 -*-
 
-from datetime import datetime
 import dateutil.parser
 
 import os.path
 from six import BytesIO
-
-import swiftclient
 
 from tornado import web
 
@@ -16,11 +13,10 @@ from IPython.html.services.notebooks.nbmanager import NotebookManager
 
 from IPython.nbformat import current
 from IPython.utils.traitlets import Unicode
-from IPython.utils.tz import utcnow, tzUTC
+from IPython.utils.tz import utcnow
 
 import uuid
 
-from bookstore import __version__
 
 class SwiftNotebookManager(NotebookManager):
     """This is a base class to be subclassed by OpenStack providers. The swift
@@ -50,7 +46,7 @@ class SwiftNotebookManager(NotebookManager):
 
         full_path = os.path.join(path, name)
         try:
-            hdrs = self.connection.head_object(self.container, full_path)
+            self.connection.head_object(self.container, full_path)
             return True
         except:
             return False
@@ -121,7 +117,8 @@ class SwiftNotebookManager(NotebookManager):
             raise web.HTTPError(400, u'No notebook JSON data provided')
 
         # One checkpoint should always exist
-        if self.notebook_exists(name, path) and not self.list_checkpoints(name, path):
+        if (self.notebook_exists(name, path) and
+                not self.list_checkpoints(name, path)):
             self.create_checkpoint(name, path)
 
         new_path = model.get('path', path).strip('/')
@@ -138,8 +135,9 @@ class SwiftNotebookManager(NotebookManager):
 
         ipynb_stream = BytesIO()
         current.write(nb, ipynb_stream, u'json')
-        self.connection.put_object(
-            self.container, full_path, ipynb_stream.getvalue(), content_type='application/json')
+        data = ipynb_stream.getvalue()
+        self.connection.put_object(self.container, full_path, data,
+                                   content_type='application/json')
         ipynb_stream.close()
 
         # Return model
@@ -195,15 +193,17 @@ class SwiftNotebookManager(NotebookManager):
             old_checkpoint_path = obj['name']
             new_checkpoint_path = old_checkpoint_path.replace(
                 old_path, new_path)
+            headers = {'X-Copy-From': '/%s/%s' %
+                       (self.container, old_checkpoint_path)}
             self.connection.put_object(self.container, new_checkpoint_path,
-                                       contents=None,
-                                       headers={'X-Copy-From': '/%s/%s' % (self.container, old_checkpoint_path)})
+                                       contents=None, headers=headers)
             self.connection.delete_object(self.container, old_checkpoint_path)
 
         # Move the notebook file
+        headers = {'X-Copy-From': '/%s/%s' %
+                   (self.container, old_path)}
         self.connection.put_object(self.container, new_path,
-                                   contents=None,
-                                   headers={'X-Copy-From': '/%s/%s' % (self.container, old_path)})
+                                   contents=None, headers=headers)
         self.connection.delete_object(self.container, old_path)
 
     def create_checkpoint(self, name, path=''):
@@ -215,9 +215,9 @@ class SwiftNotebookManager(NotebookManager):
         full_path = os.path.join(path, name)
         checkpoint_path = os.path.join(path, name, checkpoint_id)
 
+        headers = {'X-Copy-From': '/%s/%s' % (self.container, full_path)}
         self.connection.put_object(self.container, checkpoint_path,
-                                   contents=None,
-                                   headers={'X-Copy-From': '/%s/%s' % (self.container, full_path)})
+                                   contents=None, headers=headers)
 
         last_modified = utcnow()
         return {'id': checkpoint_id, 'last_modified': last_modified}
@@ -227,8 +227,10 @@ class SwiftNotebookManager(NotebookManager):
         self.log.debug("list_checkpoints('{}','{}')".format(name, path))
 
         full_path = os.path.join(path, name)
-        hdrs, data = self.connection.get_container(self.container,
-                                                   prefix=full_path + '/', delimiter='/')
+        hdrs, data = \
+            self.connection.get_container(self.container,
+                                          prefix=full_path + '/',
+                                          delimiter='/')
 
         checkpoints = [{
             'id': os.path.basename(obj['name']),
@@ -242,8 +244,8 @@ class SwiftNotebookManager(NotebookManager):
 
     def restore_checkpoint(self, checkpoint_id, name, path=''):
         """Restore a notebook from one of its checkpoints"""
-        self.log.debug(
-            "restore_checkpoint('{}','{}','{}')".format(checkpoint_id, name, path))
+        self.log.debug("restore_checkpoint('{}','{}','{}')"
+                       .format(checkpoint_id, name, path))
 
         assert name.endswith(self.filename_ext)
         assert self.notebook_exists(name, path)
@@ -251,14 +253,14 @@ class SwiftNotebookManager(NotebookManager):
         full_path = os.path.join(path, name)
         checkpoint_path = os.path.join(path, name, checkpoint_id)
 
+        headers = {'X-Copy-From': '/%s/%s' % (self.container, checkpoint_path)}
         self.connection.put_object(self.container, full_path,
-                                   contents=None,
-                                   headers={'X-Copy-From': '/%s/%s' % (self.container, checkpoint_path)})
+                                   contents=None, headers=headers)
 
-    def delete_checkpoint(self, notebook_id, checkpoint_id):
+    def delete_checkpoint(self, checkpoint_id, name, path=''):
         """Delete a checkpoint for a notebook"""
-        self.log.debug(
-            "delete_checkpoint('{}','{}')".format(notebook_id, checkpoint_id))
+        self.log.debug("delete_checkpoint('{}','{}','{}')"
+                       .format(checkpoint_id, name, path=''))
 
         checkpoint_path = os.path.join(path, name, checkpoint_id)
         self.connection.delete_object(self.container, checkpoint_path)
@@ -267,4 +269,3 @@ class SwiftNotebookManager(NotebookManager):
         info = ("Serving {}'s notebooks from OpenStack Swift "
                 "storage container: {}")
         return info.format(self.account_name, self.container)
-
