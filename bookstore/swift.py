@@ -37,16 +37,16 @@ class SwiftNotebookManager(NotebookManager):
         super(SwiftNotebookManager, self).__init__(**kwargs)
 
     def path_exists(self, path):
-        self.log.info("list_dirs('{}')".format(path))
+        self.log.debug("list_dirs('{}')".format(path))
         return True
 
     def is_hidden(self, path):
-        self.log.info("is_hidden('{}')".format(path))
+        self.log.debug("is_hidden('{}')".format(path))
         return False
 
     def notebook_exists(self, name, path=''):
         """Returns a True if the notebook exists. Else, returns False."""
-        self.log.info("notebook_exists('{}','{}')".format(name, path))
+        self.log.debug("notebook_exists('{}','{}')".format(name, path))
 
         full_path = os.path.join(path, name)
         try:
@@ -59,12 +59,12 @@ class SwiftNotebookManager(NotebookManager):
     # the subdirectories in a given path.
     def list_dirs(self, path):
         """List the directory models for a given API style path."""
-        self.log.info("list_dirs('{}')".format(path))
+        self.log.debug("list_dirs('{}')".format(path))
         return []
 
     def list_notebooks(self, path=''):
         """Return a list of notebook dicts without content."""
-        self.log.info("list_notebooks('{}')".format(path))
+        self.log.debug("list_notebooks('{}')".format(path))
 
         if path != '' and not path.endswith('/'):
             path = path + '/'
@@ -84,7 +84,7 @@ class SwiftNotebookManager(NotebookManager):
 
     def get_notebook(self, name, path='', content=True):
         """Get the notebook model with or without content."""
-        self.log.info(
+        self.log.debug(
             "get_notebook('{}','{}','{}')".format(name, path, content))
 
         full_path = os.path.join(path, name)
@@ -112,7 +112,7 @@ class SwiftNotebookManager(NotebookManager):
 
     def save_notebook(self, model, name='', path=''):
         """Save the notebook model and return the model with no content."""
-        self.log.info(
+        self.log.debug(
             "save_notebook('{}','{}','{}')".format(model, name, path))
 
         path = path.strip('/')
@@ -148,7 +148,7 @@ class SwiftNotebookManager(NotebookManager):
 
     def update_notebook(self, model, name, path=''):
         """Update the notebook's path and/or name"""
-        self.log.info(
+        self.log.debug(
             "update_notebook('{}','{}','{}')".format(model, name, path))
 
         path = path.strip('/')
@@ -161,7 +161,7 @@ class SwiftNotebookManager(NotebookManager):
 
     def delete_notebook(self, name, path=''):
         """Delete notebook by name and path."""
-        self.log.info("delete_notebook('{}','{}')".format(name, path))
+        self.log.debug("delete_notebook('{}','{}')".format(name, path))
 
         full_path = os.path.join(path, name)
         hdrs, conts = self.connection.get_container(
@@ -172,7 +172,7 @@ class SwiftNotebookManager(NotebookManager):
 
     def _rename_notebook(self, old_name, old_path, new_name, new_path):
         """Rename a notebook."""
-        self.log.info("_rename_notebook('{}','{}','{}','{}')".format(
+        self.log.debug("_rename_notebook('{}','{}','{}','{}')".format(
             old_name, old_path, new_name, new_path))
 
         old_path = old_path.strip('/')
@@ -187,7 +187,7 @@ class SwiftNotebookManager(NotebookManager):
         if self.notebook_exists(new_name, new_path):
             raise web.HTTPError(
                 409, u'Notebook with name already exists: %s' % new_path)
-        self.log.info("TODO in rename_notebook() I am ignoring save_script")
+        self.log.debug("TODO in rename_notebook() I am ignoring save_script")
 
         # Move the checkpoints
         hdrs, conts = self.connection.get_container(
@@ -209,7 +209,7 @@ class SwiftNotebookManager(NotebookManager):
 
     def create_checkpoint(self, name, path=''):
         """Create a checkpoint of the current state of a notebook"""
-        self.log.info("create_checkpoint('{}','{}')".format(name, path))
+        self.log.debug("create_checkpoint('{}','{}')".format(name, path))
 
         checkpoint_id = unicode(uuid.uuid4())
 
@@ -225,7 +225,7 @@ class SwiftNotebookManager(NotebookManager):
 
     def list_checkpoints(self, name, path=''):
         """Return a list of checkpoints for a given notebook"""
-        self.log.info("list_checkpoints('{}','{}')".format(name, path))
+        self.log.debug("list_checkpoints('{}','{}')".format(name, path))
 
         full_path = os.path.join(path, name)
         hdrs, data = self.connection.get_container(self.container,
@@ -238,12 +238,12 @@ class SwiftNotebookManager(NotebookManager):
 
         checkpoints = sorted(
             checkpoints, key=lambda item: item['last_modified'])
-        self.log.info("Checkpoints to list: {}".format(checkpoints))
+        self.log.debug("Checkpoints to list: {}".format(checkpoints))
         return checkpoints
 
     def restore_checkpoint(self, checkpoint_id, name, path=''):
         """Restore a notebook from one of its checkpoints"""
-        self.log.info(
+        self.log.debug(
             "restore_checkpoint('{}','{}','{}')".format(checkpoint_id, name, path))
 
         assert name.endswith(self.filename_ext)
@@ -258,7 +258,7 @@ class SwiftNotebookManager(NotebookManager):
 
     def delete_checkpoint(self, notebook_id, checkpoint_id):
         """Delete a checkpoint for a notebook"""
-        self.log.info(
+        self.log.debug(
             "delete_checkpoint('{}','{}')".format(notebook_id, checkpoint_id))
 
         checkpoint_path = os.path.join(path, name, checkpoint_id)
