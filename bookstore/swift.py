@@ -187,7 +187,6 @@ class SwiftNotebookManager(NotebookManager):
         if self.notebook_exists(new_name, new_path):
             raise web.HTTPError(
                 409, u'Notebook with name already exists: %s' % new_path)
-        self.log.debug("TODO in rename_notebook() I am ignoring save_script")
 
         # Move the checkpoints
         hdrs, conts = self.connection.get_container(
