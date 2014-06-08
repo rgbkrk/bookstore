@@ -11,26 +11,13 @@ Stores IPython notebooks automagically onto OpenStack clouds through Swift.
 
 *Add your provider with a pull request!*
 
-**Note: Bookstore requires IPython 1.0+**
+**Note: Bookstore requires IPython 2.0+**
 
-Bookstore currently has generic support for OpenStack Swift and simplified
-authentication for Rackspace's CloudFiles. Bookstore also handles IPython notebook's
-autosave/checkpoint feature and as of the latest release supports multiple checkpoints:
+Bookstore currently has generic support for OpenStack Swift compatible object store services (such as Rackspace CloudFiles). Bookstore also handles IPython notebook's autosave/checkpoint feature and as of the latest release supports multiple checkpoints:
 
 .. image:: https://pbs.twimg.com/media/BVD3olXCMAA2rzb.png
    :alt: Multiple checkpoints
 
-Once installed and configured (added to an ipython profile), just launch
-IPython notebook like normal:
-
-.. code-block:: bash
-
-    $ ipython notebook
-    2013-08-01 13:44:19.199 [NotebookApp] Using existing profile dir: u'/Users/rgbkrk/.ipython/profile_default'
-    2013-08-01 13:44:25.384 [NotebookApp] Using MathJax from CDN: http://cdn.mathjax.org/mathjax/latest/MathJax.js
-    2013-08-01 13:44:25.400 [NotebookApp] Serving rgbkrk's notebooks on Rackspace CloudFiles from container: notebooks
-    2013-08-01 13:44:25.400 [NotebookApp] The IPython Notebook is running at: http://127.0.0.1:9999/
-    2013-08-01 13:44:25.400 [NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
 
 Installation
 ------------
@@ -47,14 +34,13 @@ Alternatively, you can always pull from the master branch if you're the adventur
 
     $ pip install git+https://github.com/rgbkrk/bookstore.git
 
-Installation isn't the end though. You need to configure your account details
-as well as where you'll be storing the notebooks.
+You need to configure your account details as well as where you'll be storing the notebooks.
+
 
 Configuration
 -------------
 
-Bookstore has to be added to an IPython profile and configured to work with
-your OpenStack provider.
+Bookstore has to be added to an IPython profile and configured to work with your OpenStack provider.
 
 If you want to keep it simple, just add your configuration to the default configuration located at:
 
@@ -66,64 +52,48 @@ Alternatively, you can create a brand new notebook profile for bookstore:
 
 .. code-block:: bash
 
-    $ ipython profile create swiftstore
-    [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_config.py'
-    [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_swiftstore/ipython_notebook_config.py'
+    $ ipython profile create bookstore
+    [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_bookstore/ipython_config.py'
+    [ProfileCreate] Generating default config file: u'/Users/theuser/.ipython/profile_bookstore/ipython_notebook_config.py'
 
 When launching, just set the custom profile you want to use
 
 .. code-block:: bash
 
-    $ ipython notebook --profile=swiftstore
+    $ ipython notebook --profile=bookstore
 
-Each provider has their own setup for authentication.
+OpenStack (generic, non provider specific) has quite a few details you'll need to configure, namely account name, account key, auth endpoint, and region. You'll possibly need a tenant id and a tenant name.
 
-On OpenStack Swift using Keystone Authentication
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-OpenStack (generic, non provider specific) has quite a few details you'll need
-to configure, namely account name, account key, auth endpoint, and region.
-You'll possibly need a tenant id and a tenant name.
-
-Add this to your ipython notebook profile *ipython_notebook_config.py*, making
-sure it comes after the config declaration ``c = get_config()``.
+Add this to your ipython notebook profile *ipython_notebook_config.py*, making sure it comes after the config declaration ``c = get_config()``.
 
 .. code-block:: python
 
-    # Setup IPython Notebook to write notebooks to a Swift Cluster
-    # that uses Keystone for authentication
-    c.NotebookApp.notebook_manager_class = 'bookstore.swift.KeystoneNotebookManager'
-
-    # Account details for OpenStack
-    c.KeystoneNotebookManager.account_name = USER_NAME
-    c.KeystoneNotebookManager.account_key = API_KEY
-    c.KeystoneNotebookManager.auth_endpoint = u'127.0.0.1:8021'
-    c.KeystoneNotebookManager.tenant_id = TENANT_ID
-    c.KeystoneNotebookManager.tenant_name = TENANT_NAME
-    c.KeystoneNotebookManager.region = 'RegionOne'
+    # Setup IPython Notebook to write notebooks to a OpenSwift storage
+    c.NotebookApp.notebook_manager_class = 'bookstore.SwiftNotebookManager'
 
     # Container on OpenStack Swift
-    c.KeystoneNotebookManager.container_name = u'notebooks'
+    c.SwiftNotebookManager.container_name = u'notebookooks'
 
-On Rackspace's CloudFiles
-~~~~~~~~~~~~~~~~~~~~~~~~~
+    # Account details for OpenStack
+    # you can omit this, SwiftNotebookManager will get this from the environment
+    #
+    c.SwiftNotebookManager.account_name = OS_USERNAME
+    c.SwiftNotebookManager.account_key = OS_PASSWORD
+    c.SwiftNotebookManager.auth_endpoint = OS_AUTH_URL
+    c.SwiftNotebookManager.tenant_id = OS_TENANT_ID
+    c.SwiftNotebookManager.tenant_name = OS_TENANT_NAME
 
-The Rackspace CloudFileNotebookManager simply needs your ``USER_NAME`` and ``API_KEY``. You can also configure the region to store your notebooks (e.g. ``'SYD'``, ``'ORD'``, ``'DFW'``, ``'LON'``). Note: If you're using Rackspace UK, set your region to ``'LON'``.
+Once installed and configured (added to an ipython profile), just launch IPython notebook like normal:
 
-Add this to your ipython notebook profile *ipython_notebook_config.py*, making
-sure it comes after the config declaration ``c = get_config()``.
+.. code-block:: bash
 
-.. code-block:: python
+    $ ipython notebook
+    2013-08-01 13:44:19.199 [NotebookApp] Using existing profile dir: u'/Users/theuser/.ipython/profile_default'
+    2013-08-01 13:44:25.384 [NotebookApp] Using MathJax from CDN: http://cdn.mathjax.org/mathjax/latest/MathJax.js
+    2013-08-01 13:44:25.400 [NotebookApp] Serving theuser's notebooks from OpenStack Swift storage container: notebooks
+    2013-08-01 13:44:25.400 [NotebookApp] The IPython Notebook is running at: http://127.0.0.1:8888/
+    2013-08-01 13:44:25.400 [NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
 
-    # Setup IPython Notebook to write notebooks to CloudFiles
-    c.NotebookApp.notebook_manager_class = 'bookstore.cloudfiles.CloudFilesNotebookManager'
-
-    # Set your user name and API Key
-    c.CloudFilesNotebookManager.account_name = USER_NAME
-    c.CloudFilesNotebookManager.account_key = API_KEY
-
-    # Container on CloudFiles
-    c.CloudFilesNotebookManager.container_name = u'notebooks'
 
 Contributing
 ------------
