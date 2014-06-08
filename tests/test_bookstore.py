@@ -20,7 +20,6 @@ class BookstoreTestCase(unittest.TestCase):
 
     def test_entry_points(self):
         bookstore.swift
-        bookstore.cloudfiles
 
 if __name__ == "__main__":
     unittest.main()
