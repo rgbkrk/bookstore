@@ -13,4 +13,4 @@ __author__ = 'Kyle Kelley'
 __license__ = 'Apache 2.0'
 __copyright__ = 'Copyright 2013 Kyle Kelley'
 
-from .keystone import KeystoneNotebookManager
+from .swift import SwiftNotebookManager

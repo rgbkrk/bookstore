@@ -16,13 +16,34 @@ from IPython.utils.traitlets import Unicode
 from IPython.utils.tz import utcnow
 
 import uuid
+import swiftclient
 
 
 class SwiftNotebookManager(NotebookManager):
-    """This is a base class to be subclassed by OpenStack providers. The swift
-    object storage should work across implementations, only authentication
-    should differ.
+
+    """A notebook manager that uses OpenStack Swift object storage, using Keystone
+    authentication
+
+    Requires IPython 2.0+
+
+    Add this to your ipython notebook profile (`ipython_notebook_config.py`),
+    filling in details for your OpenStack implementation.
+
+        c.NotebookApp.notebook_manager_class = 'bookstore.SwiftNotebookManager'
+
+        # Set your user name and API Key
+        c.SwiftNotebookManager.auth_endpoint = OS_AUTH_URL
+        c.SwiftNotebookManager.account_name = OS_USERNAME
+        c.SwiftNotebookManager.account_key = OS_PASSWORD
+        c.SwiftNotebookManager.tenant_name = OS_TENANT_NAME
+        c.SwiftNotebookManager.container_name = u'notebooks'
     """
+
+    account_name = Unicode('', config=True, help='OpenStack account name.')
+    account_key = Unicode('', config=True, help='OpenStack account key.')
+    auth_endpoint = Unicode('', config=True, help='Authentication endpoint.')
+    tenant_name = Unicode(
+        '', config=True, help='The tenant name used for authentication')
 
     container = Unicode('notebooks', config=True,
                         help='Container name for notebooks.')
@@ -269,3 +290,15 @@ class SwiftNotebookManager(NotebookManager):
         info = ("Serving {}'s notebooks from OpenStack Swift "
                 "storage container: {}")
         return info.format(self.account_name, self.container)
+
+    def __init__(self, **kwargs):
+        super(SwiftNotebookManager, self).__init__(**kwargs)
+
+        connection = swiftclient.Connection(authurl=self.auth_endpoint,
+                                            user=self.account_name,
+                                            key=self.account_key,
+                                            tenant_name=self.tenant_name,
+                                            auth_version='2')
+
+        self.connection = connection
+        connection.put_container(self.container)
