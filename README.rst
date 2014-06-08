@@ -9,11 +9,7 @@ Bookstore
 
 Stores IPython notebooks automagically onto OpenStack clouds through Swift.
 
-*Add your provider with a pull request!*
-
 **Note: Bookstore requires IPython 2.0+**
-
-Bookstore currently has generic support for OpenStack Swift compatible object store services (such as Rackspace CloudFiles). Bookstore also handles IPython notebook's autosave/checkpoint feature and as of the latest release supports multiple checkpoints:
 
 .. image:: https://pbs.twimg.com/media/BVD3olXCMAA2rzb.png
    :alt: Multiple checkpoints
@@ -72,7 +68,9 @@ Add this to your ipython notebook profile *ipython_notebook_config.py*, making s
     c.NotebookApp.notebook_manager_class = 'bookstore.SwiftNotebookManager'
 
     # Container on OpenStack Swift
-    c.SwiftNotebookManager.container_name = u'notebookooks'
+    # defaults to notebooks
+    
+    c.SwiftNotebookManager.container_name = u'notebooks'
 
     # Account details for OpenStack
     # you can omit this, SwiftNotebookManager will get this from the environment
