@@ -30,15 +30,19 @@ Alternatively, you can always pull from the master branch if you're the adventur
 
     $ pip install git+https://github.com/rgbkrk/bookstore.git
 
-You need to configure your account details as well as where you'll be storing the notebooks.
+If you have already set your OpenSwift credentials in your environment (OS_USERNAME, OS_AUTH_URL, etc) you are good to go, just run
+
+.. code-block:: bash
+
+    ipython notebook --NotebookApp.notebook_manager_class=bookstore.SwiftNotebookManager
+
+and IPython will read/write notebooks from your cloud storage in a container called “notebooks”.
 
 
 Configuration
 -------------
 
-Bookstore has to be added to an IPython profile and configured to work with your OpenStack provider.
-
-If you want to keep it simple, just add your configuration to the default configuration located at:
+You can add bookstore to any IPython Notebook profile. Just add your configuration to the default configuration located at:
 
 .. code-block:: bash
 
@@ -58,8 +62,6 @@ When launching, just set the custom profile you want to use
 
     $ ipython notebook --profile=bookstore
 
-OpenStack (generic, non provider specific) has quite a few details you'll need to configure, namely account name, account key, auth endpoint, and region. You'll possibly need a tenant id and a tenant name.
-
 Add this to your ipython notebook profile *ipython_notebook_config.py*, making sure it comes after the config declaration ``c = get_config()``.
 
 .. code-block:: python
@@ -67,13 +69,12 @@ Add this to your ipython notebook profile *ipython_notebook_config.py*, making s
     # Setup IPython Notebook to write notebooks to a OpenSwift storage
     c.NotebookApp.notebook_manager_class = 'bookstore.SwiftNotebookManager'
 
-    # Container on OpenStack Swift
-    # defaults to notebooks
+    # Container on OpenStack Swift, defaults to notebooks.
     
     c.SwiftNotebookManager.container_name = u'notebooks'
 
-    # Account details for OpenStack
-    # you can omit this, SwiftNotebookManager will get this from the environment
+    # Account credentials for OpenStack
+    # SwiftNotebookManager will get any of these from the environment if omitted
 
     c.SwiftNotebookManager.account_name = OS_USERNAME
     c.SwiftNotebookManager.account_key = OS_PASSWORD
