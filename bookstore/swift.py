@@ -29,6 +29,7 @@ class SwiftNotebookManager(NotebookManager):
     Add this to your ipython notebook profile (`ipython_notebook_config.py`),
     filling in details for your OpenStack implementation.
 
+        # Setup IPython Notebook to write notebooks to a OpenSwift storage
         c.NotebookApp.notebook_manager_class = 'bookstore.SwiftNotebookManager'
 
         # Set your user name and API Key
@@ -36,14 +37,22 @@ class SwiftNotebookManager(NotebookManager):
         c.SwiftNotebookManager.account_name = OS_USERNAME
         c.SwiftNotebookManager.account_key = OS_PASSWORD
         c.SwiftNotebookManager.tenant_name = OS_TENANT_NAME
+
+        # Name of the container on OpenStack Swift
         c.SwiftNotebookManager.container_name = u'notebooks'
     """
 
-    account_name = Unicode('', config=True, help='OpenStack account name.')
-    account_key = Unicode('', config=True, help='OpenStack account key.')
-    auth_endpoint = Unicode('', config=True, help='Authentication endpoint.')
-    tenant_name = Unicode(
-        '', config=True, help='The tenant name used for authentication')
+    account_name = Unicode(os.getenv('OS_USERNAME'), config=True,
+        help='OpenStack account name.')
+
+    account_key = Unicode(os.getenv('OS_PASSWORD'), config=True,
+        help='OpenStack account key.')
+
+    auth_endpoint = Unicode(os.getenv('OS_AUTH_URL'), config=True,
+        help='Authentication endpoint.')
+
+    tenant_name = Unicode(os.getenv('OS_TENANT_NAME'), config=True,
+                          help='The tenant name used for authentication')
 
     container = Unicode('notebooks', config=True,
                         help='Container name for notebooks.')
