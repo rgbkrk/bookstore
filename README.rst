@@ -76,7 +76,7 @@ Add this to your ipython notebook profile *ipython_notebook_config.py*, making s
 
     # Account details for OpenStack
     # you can omit this, SwiftNotebookManager will get this from the environment
-    #
+
     c.SwiftNotebookManager.account_name = OS_USERNAME
     c.SwiftNotebookManager.account_key = OS_PASSWORD
     c.SwiftNotebookManager.auth_endpoint = OS_AUTH_URL
