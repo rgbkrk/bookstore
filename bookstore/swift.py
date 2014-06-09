@@ -43,13 +43,13 @@ class SwiftNotebookManager(NotebookManager):
     """
 
     account_name = Unicode(os.getenv('OS_USERNAME'), config=True,
-        help='OpenStack account name.')
+                           help='OpenStack account name.')
 
     account_key = Unicode(os.getenv('OS_PASSWORD'), config=True,
-        help='OpenStack account key.')
+                          help='OpenStack account key.')
 
     auth_endpoint = Unicode(os.getenv('OS_AUTH_URL'), config=True,
-        help='Authentication endpoint.')
+                            help='Authentication endpoint.')
 
     tenant_name = Unicode(os.getenv('OS_TENANT_NAME'), config=True,
                           help='The tenant name used for authentication')

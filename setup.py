@@ -76,4 +76,4 @@ setup(name='bookstore',
           'Programming Language :: Python :: 2.7',
           'Topic :: System :: Distributed Computing',
       ),
-)
+      )
