@@ -301,10 +301,13 @@ class SwiftNotebookManager(NotebookManager):
         super(SwiftNotebookManager, self).__init__(**kwargs)
 
         try:
+            os_options = {
+                'tenant_name': self.tenant_name,
+            }
             connection = swiftclient.Connection(authurl=self.auth_endpoint,
                                                 user=self.account_name,
                                                 key=self.account_key,
-                                                tenant_name=self.tenant_name,
+                                                os_options=os_options,
                                                 auth_version='2')
 
             self.connection = connection
