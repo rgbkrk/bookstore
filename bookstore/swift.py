@@ -12,7 +12,7 @@ from tornado import web
 from IPython.html.services.notebooks.nbmanager import NotebookManager
 
 from IPython.nbformat import current
-from IPython.utils.traitlets import Unicode
+from IPython.utils.traitlets import Unicode, TraitError
 from IPython.utils.tz import utcnow
 
 import uuid
@@ -300,11 +300,14 @@ class SwiftNotebookManager(NotebookManager):
     def __init__(self, **kwargs):
         super(SwiftNotebookManager, self).__init__(**kwargs)
 
-        connection = swiftclient.Connection(authurl=self.auth_endpoint,
-                                            user=self.account_name,
-                                            key=self.account_key,
-                                            tenant_name=self.tenant_name,
-                                            auth_version='2')
+        try:
+            connection = swiftclient.Connection(authurl=self.auth_endpoint,
+                                                user=self.account_name,
+                                                key=self.account_key,
+                                                tenant_name=self.tenant_name,
+                                                auth_version='2')
 
-        self.connection = connection
-        connection.put_container(self.container)
+            self.connection = connection
+            connection.put_container(self.container)
+        except swiftclient.ClientException as e:
+            raise TraitError("Couldn't connect to notebook storage: " + str(e))
