@@ -59,9 +59,6 @@ class SwiftNotebookManager(NotebookManager):
 
     notebook_dir = Unicode(u"", config=True)
 
-    def __init__(self, **kwargs):
-        super(SwiftNotebookManager, self).__init__(**kwargs)
-
     def path_exists(self, path):
         self.log.debug("list_dirs('{}')".format(path))
         return True
