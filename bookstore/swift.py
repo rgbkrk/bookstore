@@ -33,31 +33,14 @@ class SwiftNotebookManager(NotebookManager):
         c.NotebookApp.notebook_manager_class = 'bookstore.SwiftNotebookManager'
 
         # Set your user name and API Key
-        c.SwiftNotebookManager.auth_endpoint = OS_AUTH_URL
-        c.SwiftNotebookManager.account_name = OS_USERNAME
-        c.SwiftNotebookManager.account_key = OS_PASSWORD
+        c.SwiftNotebookManager.auth_url = OS_AUTH_URL
+        c.SwiftNotebookManager.user_name = OS_USERNAME
+        c.SwiftNotebookManager.password = OS_PASSWORD
         c.SwiftNotebookManager.tenant_name = OS_TENANT_NAME
 
         # Name of the container on OpenStack Swift
         c.SwiftNotebookManager.container_name = u'notebooks'
     """
-
-    account_name = Unicode(os.getenv('OS_USERNAME'), config=True,
-                           help='OpenStack account name.')
-
-    account_key = Unicode(os.getenv('OS_PASSWORD'), config=True,
-                          help='OpenStack account key.')
-
-    auth_endpoint = Unicode(os.getenv('OS_AUTH_URL'), config=True,
-                            help='Authentication endpoint.')
-
-    tenant_name = Unicode(os.getenv('OS_TENANT_NAME'), config=True,
-                          help='The tenant name used for authentication')
-
-    container = Unicode('notebooks', config=True,
-                        help='Container name for notebooks.')
-
-    notebook_dir = Unicode(u"", config=True)
 
     def path_exists(self, path):
         self.log.debug("list_dirs('{}')".format(path))
@@ -295,22 +278,74 @@ class SwiftNotebookManager(NotebookManager):
     def info_string(self):
         info = ("Serving {}'s notebooks from OpenStack Swift "
                 "storage container: {}")
-        return info.format(self.account_name, self.container)
+        return info.format(self.user_name, self.container)
+
+    user_name = Unicode(os.getenv('OS_USERNAME', ''), config=True,
+                        help='OpenStack username. Defaults to env[OS_USERNAME].')
+
+    password = Unicode(os.getenv('OS_PASSWORD', ''), config=True,
+                       help='OpenStack password. Defaults to env[OS_PASSWORD].')
+
+    auth_version = Unicode('2.0', config=True,
+                           help='Authentication protocol version')
+
+    tenant_id = Unicode(os.getenv('OS_TENANT_ID', ''), config=True,
+                        help='OpenStack tenant ID. Defaults to env[OS_TENANT_ID].')
+
+    tenant_name = Unicode(os.getenv('OS_TENANT_NAME', ''), config=True,
+                          help='OpenStack tenant name. Defaults to env[OS_TENANT_NAME].')
+
+    auth_url = Unicode(os.getenv('OS_AUTH_URL', ''), config=True,
+                       help='OpenStack auth URL. Defaults to env[OS_AUTH_URL].')
+
+    auth_token = Unicode(os.getenv('OS_AUTH_TOKEN', ''), config=True,
+                         help='OpenStack token. Defaults to env[OS_AUTH_TOKEN]. Used with storage_url to bypass the usual username/password authentication.')
+
+    storage_url = Unicode(os.getenv('OS_STORAGE_URL', ''), config=True,
+                          help='OpenStack storage URL. Defaults to env[OS_STORAGE_URL]. Overrides the storage url returned during auth. Will bypass authentication when used with auth_token.')
+
+    service_type = Unicode(os.getenv('OS_SERVICE_TYPE', ''), config=True,
+                           help='OpenStack Service type. Defaults to env[OS_SERVICE_TYPE].')
+
+    region_name = Unicode(os.getenv('OS_REGION_NAME', ''), config=True,
+                          help='OpenStack region name. Defaults to env[OS_REGION_NAME].')
+
+    service_type = Unicode(os.getenv('OS_SERVICE_TYPE', ''), config=True,
+                           help='OpenStack Service type. Defaults to env[OS_SERVICE_TYPE].')
+
+    endpoint_type = Unicode(os.getenv('OS_ENDPOINT_TYPE', ''), config=True,
+                            help='OpenStack Endpoint type. Defaults to env[OS_ENDPOINT_TYPE].')
+
+    cacert = Unicode(os.getenv('OS_CACERT', ''), config=True,
+                     help='Specify a CA bundle file to use in verifying a TLS (https) server certificate. Defaults to env[OS_CACERT].')
+
+    container = Unicode('notebooks', config=True,
+                        help='Container name for notebooks.')
+
+    notebook_dir = Unicode(u'', config=True)
 
     def __init__(self, **kwargs):
         super(SwiftNotebookManager, self).__init__(**kwargs)
 
         try:
             os_options = {
+                'auth_token': self.auth_token,
+                'tenant_id': self.tenant_id,
                 'tenant_name': self.tenant_name,
+                'service_type': self.service_type,
+                'endpoint_type': self.endpoint_type,
+                'storage_url': self.storage_url,
+                'region_name': self.region_name
             }
-            connection = swiftclient.Connection(authurl=self.auth_endpoint,
-                                                user=self.account_name,
-                                                key=self.account_key,
-                                                os_options=os_options,
-                                                auth_version='2')
-
-            self.connection = connection
-            connection.put_container(self.container)
+            args = {
+                'authurl': self.auth_url,
+                'user': self.user_name,
+                'key': self.password,
+                'os_options': os_options,
+                'auth_version': self.auth_version,
+                'cacert': self.cacert
+            }
+            self.connection = swiftclient.Connection(**args)
+            self.connection.put_container(self.container)
         except swiftclient.ClientException as e:
             raise TraitError("Couldn't connect to notebook storage: " + str(e))
