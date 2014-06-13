@@ -16,7 +16,7 @@ from IPython.utils.traitlets import Unicode, TraitError
 from IPython.utils.tz import utcnow
 
 import uuid
-import swiftclient
+from swiftclient import Connection, ClientException
 
 
 class SwiftNotebookManager(NotebookManager):
@@ -58,7 +58,7 @@ class SwiftNotebookManager(NotebookManager):
         try:
             self.connection.head_object(self.container, full_path)
             return True
-        except:
+        except ClientException:
             return False
 
     # The method list_dirs is called by the server to identify
@@ -322,8 +322,6 @@ class SwiftNotebookManager(NotebookManager):
     container = Unicode('notebooks', config=True,
                         help='Container name for notebooks.')
 
-    notebook_dir = Unicode(u'', config=True)
-
     def __init__(self, **kwargs):
         super(SwiftNotebookManager, self).__init__(**kwargs)
 
@@ -345,7 +343,7 @@ class SwiftNotebookManager(NotebookManager):
                 'auth_version': self.auth_version,
                 'cacert': self.cacert
             }
-            self.connection = swiftclient.Connection(**args)
+            self.connection = Connection(**args)
             self.connection.put_container(self.container)
-        except swiftclient.ClientException as e:
+        except ClientException as e:
             raise TraitError("Couldn't connect to notebook storage: " + str(e))
