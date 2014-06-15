@@ -41,6 +41,9 @@ class SwiftNotebookManager(NotebookManager):
         c.SwiftNotebookManager.container_name = u'notebooks'
     """
 
+    # IPython assumes this variable exists FIXME
+    notebook_dir = ''
+
     def path_exists(self, path):
         self.log.debug(u"path_exists('{}')".format(path))
         return True
