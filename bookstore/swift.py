@@ -4,7 +4,6 @@
 
 import dateutil.parser
 import posixpath
-from six import BytesIO
 
 from tornado.web import HTTPError
 
@@ -18,30 +17,49 @@ from swiftclient import Connection, ClientException
 
 
 class SwiftNotebookManager(NotebookManager):
-
-    """A notebook manager that uses OpenStack Swift object storage, using Keystone
-    authentication
-
-    Requires IPython 2.0+
-
-    Add this to your ipython notebook profile (`ipython_notebook_config.py`),
-    filling in details for your OpenStack implementation.
-
-        # Setup IPython Notebook to write notebooks to a OpenSwift storage
-        c.NotebookApp.notebook_manager_class = 'bookstore.SwiftNotebookManager'
-
-        # Set your user name and API Key
-        c.SwiftNotebookManager.auth_url = OS_AUTH_URL
-        c.SwiftNotebookManager.user_name = OS_USERNAME
-        c.SwiftNotebookManager.password = OS_PASSWORD
-        c.SwiftNotebookManager.tenant_name = OS_TENANT_NAME
-
-        # Name of the container on OpenStack Swift
-        c.SwiftNotebookManager.container_name = u'notebooks'
-    """
+    """A notebook manager that uses OpenStack Swift object storage"""
 
     # IPython assumes this variable exists FIXME
     notebook_dir = ''
+
+    connection_args = Dict(
+        config=True,
+        help='OpenStack swift Connection parameters'
+    )
+
+    container = Unicode(
+        'notebooks', config=True,
+        help='Container name for notebooks.'
+    )
+
+    # connection is implemented as a lazy property because the
+    # connection needs to be established after __init__ as finished,
+    # so we can finish the configuration in a subclass.
+    # also startup is a great deal faster.
+
+    _connection = None
+
+    @property
+    def connection(self):
+        if self._connection:
+            return self._connection
+
+        try:
+            redacted_args = self.connection_args.copy()
+            redacted_args['key'] = 'XXX'
+            self.log.debug(redacted_args)
+
+            self._connection = Connection(**self.connection_args)
+            self._connection.put_container(self.container)
+        except ClientException as e:
+            if e.http_status == 404:
+                raise TraitError(
+                    "Couldn't authenticate against the object store service: "
+                    + str(e))
+            else:
+                raise TraitError(
+                    "Couldn't connect to notebook storage: " + str(e))
+        return self._connection
 
     def path_exists(self, path):
         self.log.debug(u"path_exists('{}')".format(path))
@@ -335,28 +353,3 @@ class SwiftNotebookManager(NotebookManager):
         info = (u"Serving notebooks from OpenStack Swift "
                 "storage container: {}")
         return info.format(self.container)
-
-    connection_args = Dict(config=True,
-                           help='OpenStack swift Connection parameters')
-
-    container = Unicode('notebooks', config=True,
-                        help='Container name for notebooks.')
-
-    def __init__(self, **kwargs):
-        super(SwiftNotebookManager, self).__init__(**kwargs)
-
-        try:
-            redacted_args = self.connection_args.copy()
-            redacted_args['key'] = 'XXX'
-            self.log.debug(redacted_args)
-
-            self.connection = Connection(**self.connection_args)
-            self.connection.put_container(self.container)
-        except ClientException as e:
-            if e.http_status == 404:
-                raise TraitError(
-                    "Couldn't authenticate against the object store service: "
-                    + str(e))
-            else:
-                raise TraitError(
-                    "Couldn't connect to notebook storage: " + str(e))

@@ -30,13 +30,24 @@ Alternatively, you can always pull from the master branch if you're the adventur
 
     $ pip install git+https://github.com/rgbkrk/bookstore.git
 
-If you have already set your OpenSwift credentials in your environment (OS_USERNAME, OS_AUTH_URL, etc) you are good to go, just run
+If you have already set your OpenStack credentials in your environment (OS_USERNAME, OS_AUTH_URL, etc) you are good to go, just run
 
 .. code-block:: bash
 
-    ipython notebook --NotebookApp.notebook_manager_class=bookstore.SwiftNotebookManager
+    ipython notebook --NotebookApp.notebook_manager_class=bookstore.OpenStackNotebookManager
 
 and IPython will read/write notebooks from your cloud storage in a container called “notebooks”.
+
+.. code-block:: bash
+
+    $ ipython notebook
+    2014-06-16 16:16:46.810 [NotebookApp] Using existing profile dir: '/Users/andreabedini/.ipython/profile_default'
+    2014-06-16 16:16:48.490 [NotebookApp] Using MathJax from CDN: http://cdn.mathjax.org/mathjax/latest/MathJax.js
+    2014-06-16 16:16:48.515 [NotebookApp] Serving notebooks from OpenStack Swift storage container: notebooks
+    2014-06-16 16:16:48.515 [NotebookApp] 0 active kernels
+    2014-06-16 16:16:48.515 [NotebookApp] The IPython Notebook is running at: http://localhost:8888/
+    2014-06-16 16:16:48.515 [NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+    2014-06-16 16:16:56.463 [NotebookApp] Kernel started: b750f6ee-879f-4c39-a63f-504210cc9bf6
 
 
 Configuration
@@ -62,37 +73,56 @@ When launching, just set the custom profile you want to use
 
     $ ipython notebook --profile=bookstore
 
-Add this to your ipython notebook profile *ipython_notebook_config.py*, making sure it comes after the config declaration ``c = get_config()``.
+Bookstore offers a general class that works with any OpenStack Swift service along with few adaptors for specific services like Rackspace CloudFiles.
+
+OpenStackNotebookManager
+------------------------
 
 .. code-block:: python
 
-    # Setup IPython Notebook to write notebooks to a OpenSwift storage
+    # Tells IPython Notebook to use the OpenStackNotebookManager class for storage
+    c.NotebookApp.notebook_manager_class = 'bookstore.OpenStackNotebookManager'
+
+    # Account credentials for OpenStack, OpenStackNotebookManager will
+    # get any of these from the environment if omitted
+
+    c.OpenStackNotebookManager.auth_endpoint = # OS_AUTH_URL
+    c.OpenStackNotebookManager.user_name = # OS_USERNAME
+    c.OpenStackNotebookManager.password = # OS_PASSWORD
+    c.OpenStackNotebookManager.tenant_id = # OS_TENANT_ID
+    c.OpenStackNotebookManager.tenant_name = # OS_TENANT_NAME
+
+Rackspace CloudFiles
+--------------------
+
+.. code-block:: python
+
+    # Tells IPython Notebook to use the Rackspace CloudFilesNotebookManager for storage
+    c.NotebookApp.notebook_manager_class = 'bookstore.CloudFilesNotebookManager'
+
+    c.CloudFilesNotebookManager.user_name = # your rackspace username
+    c.CloudFilesNotebookManager.password = # your rackspace password
+
+SwiftNotebookManager
+--------------------
+
+For maximum flexibility, you can use directly the class `SwiftNotebookManager`.
+
+.. code-block:: python
+
     c.NotebookApp.notebook_manager_class = 'bookstore.SwiftNotebookManager'
 
-    # Container on OpenStack Swift, defaults to notebooks.
-    
-    c.SwiftNotebookManager.container_name = u'notebooks'
+    c.SwiftNotebookManager.connection_args = {
 
-    # Account credentials for OpenStack
-    # SwiftNotebookManager will get any of these from the environment if omitted
+    }
 
-    c.SwiftNotebookManager.account_name = OS_USERNAME
-    c.SwiftNotebookManager.account_key = OS_PASSWORD
-    c.SwiftNotebookManager.auth_endpoint = OS_AUTH_URL
-    c.SwiftNotebookManager.tenant_id = OS_TENANT_ID
-    c.SwiftNotebookManager.tenant_name = OS_TENANT_NAME
+`connection_args` is passed as-it-is to `swiftclient.client.Connection` see http://docs.openstack.org/developer/python-swiftclient/swiftclient.html#swiftclient.client.Connection for all the available arguments.
 
-Once installed and configured (added to an ipython profile), just launch IPython notebook like normal:
+Independently from the adaptor used, you can customize the name of the container used to store the notebooks with the following configuration line:
 
-.. code-block:: bash
+.. code-block:: python
 
-    $ ipython notebook
-    2013-08-01 13:44:19.199 [NotebookApp] Using existing profile dir: u'/Users/theuser/.ipython/profile_default'
-    2013-08-01 13:44:25.384 [NotebookApp] Using MathJax from CDN: http://cdn.mathjax.org/mathjax/latest/MathJax.js
-    2013-08-01 13:44:25.400 [NotebookApp] Serving theuser's notebooks from OpenStack Swift storage container: notebooks
-    2013-08-01 13:44:25.400 [NotebookApp] The IPython Notebook is running at: http://127.0.0.1:8888/
-    2013-08-01 13:44:25.400 [NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
-
+    c.SwiftNotebookManager.container = "here_are_the_notebooks"
 
 Contributing
 ------------

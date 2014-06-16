@@ -14,3 +14,5 @@ __license__ = 'Apache 2.0'
 __copyright__ = 'Copyright 2013 Kyle Kelley'
 
 from .swift import SwiftNotebookManager
+from .openstack import OpenStackNotebookManager
+from .cloudfiles import CloudFilesNotebookManager
