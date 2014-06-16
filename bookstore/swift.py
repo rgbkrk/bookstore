@@ -346,7 +346,10 @@ class SwiftNotebookManager(NotebookManager):
         super(SwiftNotebookManager, self).__init__(**kwargs)
 
         try:
-            self.log.debug(self.connection_args)
+            redacted_args = self.connection_args.copy()
+            redacted_args['key'] = 'XXX'
+            self.log.debug(redacted_args)
+
             self.connection = Connection(**self.connection_args)
             self.connection.put_container(self.container)
         except ClientException as e:
