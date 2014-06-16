@@ -113,10 +113,15 @@ For maximum flexibility, you can use directly the class `SwiftNotebookManager`.
     c.NotebookApp.notebook_manager_class = 'bookstore.SwiftNotebookManager'
 
     c.SwiftNotebookManager.connection_args = {
-
+        'authurl': ....,
+        'user': ....,
+        'key': ....,
+        'os_options': {
+            ....
+        }
     }
 
-`connection_args` is passed as-it-is to `swiftclient.client.Connection` see http://docs.openstack.org/developer/python-swiftclient/swiftclient.html#swiftclient.client.Connection for all the available arguments.
+`connection_args` is passed as-it-is to `swiftclient.client.Connection` see the [documentation](http://docs.openstack.org/developer/python-swiftclient/swiftclient.html#swiftclient.client.Connection) for the available arguments.
 
 Independently from the adaptor used, you can customize the name of the container used to store the notebooks with the following configuration line:
 
