@@ -37,6 +37,7 @@ class TestSwiftNotebookManager(TestNotebookManager, unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.notebook_manager.connection.delete_container(cls.container)
+        cls.notebook_manager.connection.close()
 
     def tearDown(self):
         _, objs = self.notebook_manager.connection.get_container(
