@@ -101,7 +101,7 @@ class SwiftNotebookManager(NotebookManager):
         self.log.debug(u"list_notebooks('{}')".format(path))
 
         _, conts = self.connection.get_container(
-            self.container, prefix=path + '/', delimiter='/')
+            self.container, prefix=path, delimiter='/')
 
         notebooks = [{
             'name': posixpath.basename(obj['name']),
