@@ -3,7 +3,6 @@
 # -*- coding: utf-8 -*-
 
 import dateutil.parser
-import os
 import posixpath
 from six import BytesIO
 
@@ -11,7 +10,7 @@ from tornado.web import HTTPError
 
 from IPython.html.services.notebooks.nbmanager import NotebookManager
 from IPython.nbformat import current
-from IPython.utils.traitlets import Unicode, TraitError
+from IPython.utils.traitlets import Dict, TraitError, Unicode
 from IPython.utils.tz import utcnow
 
 import uuid
@@ -68,9 +67,9 @@ class SwiftNotebookManager(NotebookManager):
 
         hdrs, conts = self.connection.get_object(self.container, old_path)
         self.log.debug("before delete_object: {}".format(old_path))
-        self.log.debug("before delete_object:\nhdrs = {}\nconts = {}".format(hdrs, conts))
+        self.log.debug(
+            "before delete_object:\nhdrs = {}\nconts = {}".format(hdrs, conts))
         self.connection.delete_object(self.container, old_path)
-
 
     def notebook_exists(self, name, path=''):
         """Returns a True if the notebook exists. Else, returns False."""
@@ -125,25 +124,30 @@ class SwiftNotebookManager(NotebookManager):
         try:
             full_path = posixpath.join(path, name)
             if content:
-                hdrs, conts = self.connection.get_object(self.container, full_path)
+                hdrs, conts = self.connection.get_object(
+                    self.container, full_path)
                 nb = current.reads(conts, 'json')
                 self.mark_trusted_cells(nb, path, name)
+                last_modified = dateutil.parser.parse(hdrs['last-modified'])
+                created = dateutil.parser.parse(hdrs['last-modified'])
                 model = {
                     'name': name,
                     'path': path,
-                    'last_modified': dateutil.parser.parse(hdrs['last-modified']),
-                    'created': dateutil.parser.parse(hdrs['last-modified']),
+                    'last_modified': last_modified,
+                    'created': created,
                     'type': 'notebook',
                     'content': nb
                 }
                 return model
             else:
                 hdrs = self.connection.head_object(self.container, full_path)
+                last_modified = dateutil.parser.parse(hdrs['last-modified'])
+                created = dateutil.parser.parse(hdrs['last-modified'])
                 model = {
                     'name': name,
                     'path': path,
-                    'last_modified': dateutil.parser.parse(hdrs['last-modified']),
-                    'created': dateutil.parser.parse(hdrs['last-modified']),
+                    'last_modified': last_modified,
+                    'created': created,
                     'type': 'notebook',
                 }
                 return model
@@ -164,7 +168,7 @@ class SwiftNotebookManager(NotebookManager):
         if 'content' not in model:
             raise HTTPError(400, u'No notebook JSON data provided')
 
-        # # One checkpoint should always exist
+        # One checkpoint should always exist
         # if (self.notebook_exists(name, path) and
         #         not self.list_checkpoints(name, path)):
         #     self.create_checkpoint(name, path)
@@ -202,14 +206,7 @@ class SwiftNotebookManager(NotebookManager):
         new_name = model.get('name', name)
         new_path = model.get('path', path).strip('/')
         if path != new_path or name != new_name:
-            self.log.debug("renaming {}/{} to {}/{}".format(path, name, new_path, new_name))
-            _, data = \
-                self.connection.get_container(self.container)
-            self.log.debug("pre container = {}".format(data))
             self._rename_notebook(name, path, new_name, new_path)
-            _, data = \
-                self.connection.get_container(self.container)
-            self.log.debug("post container = {}".format(data))
         model = self.get_notebook(new_name, new_path, content=False)
         return model
 
@@ -252,8 +249,10 @@ class SwiftNotebookManager(NotebookManager):
         # Move the checkpoints
         checkpoints = self.list_checkpoints(old_name, old_path)
         for checkpoint in checkpoints:
-            old_checkpoint_path = self._checkpoint_path(checkpoint['id'], old_name, old_path)
-            new_checkpoint_path = self._checkpoint_path(checkpoint['id'], new_name, new_path)
+            old_checkpoint_path = self._checkpoint_path(
+                checkpoint['id'], old_name, old_path)
+            new_checkpoint_path = self._checkpoint_path(
+                checkpoint['id'], new_name, new_path)
             self._move_object(old_checkpoint_path, new_checkpoint_path)
 
         new_full_path = posixpath.join(new_path, new_name)
@@ -277,7 +276,7 @@ class SwiftNotebookManager(NotebookManager):
         self._copy_object(full_path, checkpoint_path)
 
         last_modified = utcnow()
-        return {'id': checkpoint_id, 'last_modified': last_modified }
+        return {'id': checkpoint_id, 'last_modified': last_modified}
 
     def list_checkpoints(self, name, path=''):
         """Return a list of checkpoints for a given notebook"""
@@ -336,48 +335,12 @@ class SwiftNotebookManager(NotebookManager):
                 raise
 
     def info_string(self):
-        info = (u"Serving {}'s notebooks from OpenStack Swift "
+        info = (u"Serving notebooks from OpenStack Swift "
                 "storage container: {}")
-        return info.format(self.user_name, self.container)
+        return info.format(self.container)
 
-    user_name = Unicode(os.getenv('OS_USERNAME', ''), config=True,
-                        help='OpenStack username. Defaults to env[OS_USERNAME].')
-
-    password = Unicode(os.getenv('OS_PASSWORD', ''), config=True,
-                       help='OpenStack password. Defaults to env[OS_PASSWORD].')
-
-    auth_version = Unicode('2.0', config=True,
-                           help='Authentication protocol version')
-
-    tenant_id = Unicode(os.getenv('OS_TENANT_ID', ''), config=True,
-                        help='OpenStack tenant ID. Defaults to env[OS_TENANT_ID].')
-
-    tenant_name = Unicode(os.getenv('OS_TENANT_NAME', ''), config=True,
-                          help='OpenStack tenant name. Defaults to env[OS_TENANT_NAME].')
-
-    auth_url = Unicode(os.getenv('OS_AUTH_URL', ''), config=True,
-                       help='OpenStack auth URL. Defaults to env[OS_AUTH_URL].')
-
-    auth_token = Unicode(os.getenv('OS_AUTH_TOKEN', ''), config=True,
-                         help='OpenStack token. Defaults to env[OS_AUTH_TOKEN]. Used with storage_url to bypass the usual username/password authentication.')
-
-    storage_url = Unicode(os.getenv('OS_STORAGE_URL', ''), config=True,
-                          help='OpenStack storage URL. Defaults to env[OS_STORAGE_URL]. Overrides the storage url returned during auth. Will bypass authentication when used with auth_token.')
-
-    service_type = Unicode(os.getenv('OS_SERVICE_TYPE', ''), config=True,
-                           help='OpenStack Service type. Defaults to env[OS_SERVICE_TYPE].')
-
-    region_name = Unicode(os.getenv('OS_REGION_NAME', ''), config=True,
-                          help='OpenStack region name. Defaults to env[OS_REGION_NAME].')
-
-    service_type = Unicode(os.getenv('OS_SERVICE_TYPE', ''), config=True,
-                           help='OpenStack Service type. Defaults to env[OS_SERVICE_TYPE].')
-
-    endpoint_type = Unicode(os.getenv('OS_ENDPOINT_TYPE', ''), config=True,
-                            help='OpenStack Endpoint type. Defaults to env[OS_ENDPOINT_TYPE].')
-
-    cacert = Unicode(os.getenv('OS_CACERT', ''), config=True,
-                     help='Specify a CA bundle file to use in verifying a TLS (https) server certificate. Defaults to env[OS_CACERT].')
+    connection_args = Dict(config=True,
+                           help='OpenStack swift Connection parameters')
 
     container = Unicode('notebooks', config=True,
                         help='Container name for notebooks.')
@@ -386,24 +349,14 @@ class SwiftNotebookManager(NotebookManager):
         super(SwiftNotebookManager, self).__init__(**kwargs)
 
         try:
-            os_options = {
-                'auth_token': self.auth_token,
-                'tenant_id': self.tenant_id,
-                'tenant_name': self.tenant_name,
-                'service_type': self.service_type,
-                'endpoint_type': self.endpoint_type,
-                'storage_url': self.storage_url,
-                'region_name': self.region_name
-            }
-            args = {
-                'authurl': self.auth_url,
-                'user': self.user_name,
-                'key': self.password,
-                'os_options': os_options,
-                'auth_version': self.auth_version,
-                'cacert': self.cacert
-            }
-            self.connection = Connection(**args)
+            self.log.debug(self.connection_args)
+            self.connection = Connection(**self.connection_args)
             self.connection.put_container(self.container)
         except ClientException as e:
-            raise TraitError("Couldn't connect to notebook storage: " + str(e))
+            if e.http_status == 404:
+                raise TraitError(
+                    "Couldn't authenticate against the object store service: "
+                    + str(e))
+            else:
+                raise TraitError(
+                    "Couldn't connect to notebook storage: " + str(e))
