@@ -126,7 +126,7 @@ class SwiftNotebookManager(NotebookManager):
             if content:
                 hdrs, conts = self.connection.get_object(
                     self.container, full_path)
-                nb = current.reads(conts, 'json')
+                nb = current.reads(conts.decode('utf-8'), 'json')
                 self.mark_trusted_cells(nb, path, name)
                 last_modified = dateutil.parser.parse(hdrs['last-modified'])
                 created = dateutil.parser.parse(hdrs['last-modified'])
@@ -185,12 +185,9 @@ class SwiftNotebookManager(NotebookManager):
         if 'name' in nb['metadata']:
             nb['metadata']['name'] = u''
 
-        ipynb_stream = BytesIO()
-        current.write(nb, ipynb_stream, u'json')
-        data = ipynb_stream.getvalue()
+        data = current.writes(nb, u'json').encode('utf-8')
         self.connection.put_object(self.container, full_path, data,
                                    content_type='application/json')
-        ipynb_stream.close()
 
         # Return model
         model = self.get_notebook(new_name, new_path, content=False)
