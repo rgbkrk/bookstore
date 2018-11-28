@@ -7,6 +7,8 @@ Bookstore
 .. image:: https://travis-ci.org/rgbkrk/bookstore.png?branch=master
    :target: https://travis-ci.org/rgbkrk/bookstore
 
+⚠️ **This is the 1.x series of `bookstore`. The bookstore 2.x series lives on as a spiritual successor relying on S3, in https://github.com/nteract/bookstore** ⚠️
+
 Stores IPython notebooks automagically onto OpenStack clouds through Swift.
 
 *Add your provider with a pull request!*
